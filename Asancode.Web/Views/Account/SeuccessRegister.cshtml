@@ -1,0 +1,40 @@
+﻿@using Core.Convertors
+@model DataLayer.Entities.User.Users
+@{ ViewData["Title"] = "پایان ثبت نام"; }
+
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h2>روند تکمیل ثبت نام </h2>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account"></i>  @Model.UserName  </li>
+                        <li class="list-inline-item h6 date text-muted"><i class="mdi mdi-calendar-check"></i>@Model.RegisterDate.ToShamci() </li>
+                    </ul>
+                    <div class="page-next ">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page">ثبت نام موفق</li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="container mt-3" style="background-image: url('/UserPanel/successRegst.png'); padding: 75px; ">
+    <div class="row">
+        <div class="col-lg-11  col-md-9 col-xs-10">
+            <div class="align-items-center alert alert-success text-ce nter text-capitalize p-2 mr-5">
+                <h3 class="text-center text-dark">@Model.UserName  عزیز: ثبت نام شما با موفقیت انجام گرفت   </h3>
+                <h5 class="text-center">" باعث افتخار مجموعه آموزشی آسان کد هست که به گروه آموزشی ما ملحق شدید "</h5>
+                <hr />
+                <p class="text-center sizefull">  ایمیلی حاوی لینک فعالسازی به آدرس ایمیل @Model.Email  ارسال شد </p>
+                <p class="text-center">لطفا جهت ادامه وتایید ثبت نام خود وارد ایمیل @Model.Email شوید و بر روی لینک فعال سازی کلیک کنید.</p>
+            </div>
+        </div>
+    </div>
+</div>

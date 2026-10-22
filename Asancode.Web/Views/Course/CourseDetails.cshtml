@@ -1,0 +1,484 @@
+@using System.IO
+@using Core.Convertors
+@using Core.DTO
+@using Core.Services.Interfaces
+@using DataLayer.Course
+@using DataLayer.Entities.Order
+@using DataLayer.Entities.User
+@model DataLayer.Entities.Course.Course
+@inject IOrderService _orderService;
+
+
+
+@{
+    ViewData["Title"] = Model.CourseTitle;
+    bool isUserBuyCourse = false;
+    bool isUserBuyPlan = false;
+    System.Diagnostics.Debug.Assert(User.Identity != null, "User.Identity != null");
+    if (User.Identity.IsAuthenticated)
+    {
+        isUserBuyCourse = _orderService.IsBuyCourse(User.Identity.Name, Model.CourseId);
+        // isUserBuyPlan = _orderService.IsBuyPlan(User.Identity.Name);
+    }
+    int row = 1;
+}
+@section MetaTag
+{
+    <meta name=googlebot content=index,follow>
+    <meta name=robots content=noodp,noydir>
+    <meta name=description content="شرح صفحه">
+    <meta property=og:site_name value="خودآموزآسان کد">
+    <meta property=og:title content="@Model.CourseTitle">
+    <meta property=og:url content="https://Asancode.com/CourseDetails/@Model.CourseTitle" />
+    <meta property=og:image content="/Course/MainImage/@Model.CourseImageName">
+    <meta property=og:image:url content="/Course/MainImage/@Model.CourseImageName" />
+    <meta property=og:image:width content="700">
+    <meta property=og:image:type content="image/jpg">
+    <meta property=og:description content="آموزش برنامه نویسی آنلاین">
+    <meta property=og:price:currency content="IRR">
+    <meta property=og:locale content="ir_FA">
+    <link rel="canonical" href="https://Asancode.com/CourseDetails/@Model.CourseId/@Model.CourseTitle.Trim().Replace(" ", "-")" />
+
+}
+<link rel="stylesheet" href="/css/asancode.css" type="text/css" />
+<section class="bg-half bg-light d-table w-100">
+    <div class="container ">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h3>@Model.CourseTitle </h3>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account"></i>@Model.User.UserName </li>
+                        <li class="list-inline-item h6 date text-muted"><i class="mdi mdi-calendar-check"></i>@Model.CreateDate.ToShamci() </li>
+                    </ul>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item"><a href="/Course">دوره های آموزشی</a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="/CourseDetails/@Model.CourseId/@Model.CourseTitle">@Model.CourseTitle</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container All_Font-course">
+        <div class="row">
+        <!-- BLog Start -->
+            <div class="col-lg-8 col-md-6 col-xs-12">
+                <div class="card blog blog-detail border-0 shadow rounded">
+                    <img class="img-fluid rounded-top" src="/Course/MainImage/@Model.CourseImageName" alt="@Model.CourseTitle">
+                    <div class="card-body content">
+                        <h6>
+                            <i class="mdi mdi-tag text-primary me-1"></i>
+                            <a href="/CourseDetails/@Model.CourseId/@Model.CourseTitle" class="text-info">@Model.CourseTitle</a>
+                        </h6>
+                        <p class="text-muted mt-3"id="descript">@Html.Raw(Model.CourseDescription)</p>
+                        <!-- File Demo-->
+                        @if (!string.IsNullOrEmpty(Model.DemoFileName))
+{
+                            <div class="card border-0 shadow rounded ms-lg-4 overflow-hidden">
+                                <div class="d-flex p-2 bg-light justify-content-between align-items-center">
+                                    <div>
+                                        <a href="javascript:void(0)" class="text-danger"><i class="mdi mdi-circle"></i></a>
+                                        <a href="javascript:void(0)" class="text-warning"><i class="mdi mdi-circle"></i></a>
+                                        <a href="javascript:void(0)" class="text-success"><i class="mdi mdi-circle"></i></a>
+                                    </div>
+                                    <small class="fw-bold"><i class="mdi mdi-circle-medium text-success"></i> ویدیو</small>
+                                </div>
+                                <div class="bg-light px-2 position-relative">
+                                    <video controls poster="/Course/MainImage/@Model.CourseImageName" class="w-100 rounded">
+                                        <source src="/Course/Demo/@Model.DemoFileName" />
+                                    </video>
+
+                                    <div class="position-absolute top-0 start-0">
+                                        <div class="mt-2 ms-3">
+                                            <span class="badge bg-danger">نمایش دموی دوره </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <!--End File Demo-->
+                        <!--Start Show Online Episode-->
+                        @if (ViewBag.Episode != null)
+                        {
+                            CourseEpisode episode = ViewBag.Episode as CourseEpisode;
+
+                            <div class="card border-0 shadow rounded ms-lg-4 overflow-hidden">
+                                <div class="d-flex p-2 bg-light justify-content-between align-items-center">
+                                    <div>
+                                        <a href="javascript:void(0)" class="text-danger"><i class="mdi mdi-circle"></i></a>
+                                        <a href="javascript:void(0)" class="text-warning"><i class="mdi mdi-circle"></i></a>
+                                        <a href="javascript:void(0)" class="text-success"><i class="mdi mdi-circle"></i></a>
+                                        <small class="fw-bold text-center ">
+                                            @if (episode != null)
+                                            {
+                                                @episode.EpisodeTitle
+                                            }
+                                        </small>
+
+                                    </div>
+                                </div>
+                                <div class="bg-light px-2 position-relative">
+
+                                    <video controls poster="/Course/MainImage/@Model.CourseImageName" class="w-100 rounded" id="vid">
+                                        <source src="@ViewBag.filePath" />
+                                    </video>
+
+                                    <div class="position-absolute top-0 start-0">
+                                        <div class="mt-2 ms-3">
+                                            <span class="badge bg-danger">نمایش آنلاین </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <!--End Show Online Episode-->
+                        @* <a class="view-Live-courseasancode" href="https://dl.asancode.com/downloadfile/1402/python/@Item.EpisodeFileName">@Item.EpisodeTitle</a> *@
+
+                        <h3 class="mt-2"> سرفصل های این دوره : </h3>
+                        <div class="col  pt-1 active" id="accordions">
+                            <div class="component-wrapper rounded shadow">
+                                <div class="p-2">
+                                    <div class="accordion mt-4 pt-2" id="buyingquestion">
+                                        <div class="accordion-item rounded mt-2">
+                                            <h2 id="headingOne" class="accordion-header" >
+                                                <button class="accordion-button text-right  border-0 bg-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="False" aria-controls="collapseOne">
+                                                    <h6 class="title"> لیست قسمت های این آموزش</h6>
+                                                </button>
+                                            </h2>
+                                            @foreach (var Item in Model.CourseEpisodes)
+                                            {
+                                                <div id="collapseOne" class="accordion-collapse border-0 show collapse " aria-labelledby="headingOne" data-bs-parent="#buyingquestion">
+                                                    <div class="accordion-body text-muted bg-white">
+                                                        <div class="video-item-Course">
+                                                            <ul class="view-Live-courseasancode">
+                                                                <li class="view-Live-courseasancode">
+                                                                    @if (User.Identity.IsAuthenticated == false)
+                                                                    {
+                                                                       @if (Item.IsFree)
+                                                                       {
+                                                                           <span class="conterNum-Course-Course"> @row </span>
+                                                                           <a class="view-Live-courseasancode" href="/login">@Item.EpisodeTitle</a>
+                                                                           <span class="course-time-state" >رایگان </span>
+                                                                           row+=1;
+                                                                       }
+                                                                       else
+                                                                       {
+                                                                           <span class="conterNum-Course-Course"> @row </span>
+                                                                            <a class="view-Live-courseasancode" href="/login">@Item.EpisodeTitle</a>
+                                                                           <span class="course-time-state" >نقدی </span>
+                                                                           row+=1;
+                                                                       }
+                                                                    }
+                                                                  
+                                                                    @if (User.Identity.IsAuthenticated)
+                                                                    {
+
+                                                                        @if (Item.IsFree || isUserBuyCourse)
+                                                                        {
+                                                                            <span class="conterNum-Course-Course"> @row </span>
+                                                                            <a class="view-Live-courseasancode" href="https://dl.asancode.com/downloadfile/1402/python/@Item.EpisodeFileName">@Item.EpisodeTitle</a>
+                                                                            row += 1;
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="conterNum-Course-Course"> @row </span>
+                                                                            <a class="view-Live-courseasancode" href="/Course/BuyCourse/@Model.CourseId"> @Item.EpisodeTitle</a>
+                                                                            row += 1;
+                                                                        }
+                                                                        @if (Item.IsFree)
+                                                                        {
+                                                                            <span class="course-time-state" href="JavasScript.void(0)">رایگان </span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <p class="d-inline course-time-state"> نقدی</p>
+                                                                        }
+
+                                                                    // if (Item.IsFree || isUserBuyCourse)
+                                                                    // {
+                                                                    @* <a class="view-Live-courseasancode" href="/CourseDetails/@Model.CourseId/@Model.CourseTitle/?episode=@Item.EpisodeId"> *@
+                                                                    @* <a class="view-Live-courseasancode" href="https://dl.asancode.com/downloadfile/1402/python/@Item.EpisodeFileName"> *@
+                                                                    @* <i class="float-end  mdi mdi-play-circle-outline h4 me-2 text-info"></i> *@
+                                                                    @* <script>var video = document.getElementById("vid");</script> *@
+                                                                    @* </a> *@
+                                                                    //}
+                                                                    }
+                                                                    <span class="course-time-left-course d-inline me-1">@Item.EpisodeTime</span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div id="vot">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card shadow rounded border-0 mt-4">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <form asp-controller="Course" asp-action="CreateComment" class="p-2"
+                                  data-ajax="true"
+                                  data-ajax-method="post"
+                                  data-ajax-mode="replace"
+                                  data-ajax-update="#listComment"
+                                  data-ajax-success="Success">
+                                <input type="hidden" name="comments.CourseId" value="@Model.CourseId" />
+                                @if (isUserBuyCourse)
+                                {
+                                    <div class="mt-4 pt-2">
+                                        <p class="text-muted">
+                                            لطفا نظر خود را در مورد این دوره برای ما بنویسید:
+                                            <div class="form-group">
+                                                <textarea class="form-control" id="comments_Comment" name="comments.Comment" placeholder="متن نظر"></textarea>
+                                            </div>
+                                    </div>
+                                    <button type="submit"  class="btn btn-info mb-4 mt-2 pt-2"> ثبت دیدگاه </button>
+                                }
+                            </form>
+                            <div class="card shadow rounded border-0 mt-3 text-muted fst-italic rounded " id="listComment"  style="text-align: right">
+                            </div>
+                        }
+                    </div>
+                </div>
+                <!-- Comment Course-->
+            </div>
+        <!-- START SLIDEBAR -->
+        <div class="col-lg-4 col-md-6 col-12   mt-sm-0  pt-sm-0">
+            <div class="box-Social-Linnk box-Social-shadow Social-Linnk p-relative">
+                  <div class="text-center">لینک کوتاه این دوره :</div>
+                  <!-- shortlink -->
+                  <div class="page-next">
+                      @{
+                          string link="https://asancode.com/c/"+Model.ShortKey;
+                      }
+                      <nav  class=" bg-white rounded shadow mb-0 p-2 float-start">
+
+                          <a id="matn" title="لینک کوتاه"  href="@(link)">@("https://asancode.com/c/"+Model.ShortKey)
+                                    
+                          </a>
+                          <a tooltype="link"  title="کپی کن" href="javascript:void(0)">
+                              <i class="uil-copy text-danger bg-white p-1"  onclick="copyToClipboard('#matn')"> </i>
+                          </a>
+                      </nav>
+                  </div><br /><br />
+                  <p id="short-link-message" class="text-center d-block"></p>
+              </div>
+            <div class="card team text-center border-0">
+                <div class="card-body">
+                    <div class="position-relative">
+                        <img src="/UserPanel/@Model.User.UserImage" class="img-fluid avatar avatar-ex-large rounded-circle shadow" alt="تصویر مدرس">
+                        <ul class="list-unstyled social-icon team-icon mb-0">
+                            <li class="list-inline-item"><a href="https://instagram.com/Asan_Code" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram fea icon-sm fea-social"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a></li>
+                            <li class="list-inline-item"><a href="https://www.linkedin.com/in/ahmad-hadizadeh-374683132/" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin fea icon-sm fea-social"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+                        </ul><!--end icon-->
+                    </div>
+                    <div class="content pt-3 pb-3">
+                        <h5 class="mb-0">
+                            <a href="javascript:void(0)" class="name text-dark">مدرس:@Model.User.UserName</a>
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            <div class="card border-0 sidebar sticky-bar rounded shadow">
+                <div class="card-body">
+                    <!-- وضعیت دوره -->
+                    <div class="widget mb-4 pb-2">
+                        <h5 class="widget-title">جزئیات این دوره </h5>
+                        <ul class="list-unstyled mt-4 mb-0 blog-categories">
+                            <li>
+                                <i>مدت دوره </i>
+                                @{
+                                    TimeSpan time = new TimeSpan(Model.CourseEpisodes.Sum(e => e.EpisodeTime.Ticks));
+                                }
+                                <span class="float-end">@time</span>
+                            </li>
+                            <li>
+                                <i>تعداد قسمت های این آموزش </i> <span class="float-end">@Model.CourseEpisodes.Count</span>
+                            </li>
+                            @*<li>
+                                    <i>تعداد دانشجو ها </i> <span class="float-end"> @Model.UserCourses.Count</span>
+                                </li>*@
+                            <li>
+                                <i>سطح دوره </i> <span class="float-end">@Model.CourseLevels.LevelTitle</span>
+                            </li>
+                            <li>
+                                <i>وضعیت دوره </i> <span class="float-end">@Model.CourseStatuses.StatusTitle</span>
+                            </li>
+                            @* <li> *@
+                            @*     <i>سطح دسترسی دوره </i> <span class="float-end"></span> *@
+                            @* </li> *@
+                            @if (Model.CoursePrice != 0)
+                            {
+                                <li>
+                                    @if (isUserBuyCourse)
+                                    {
+                                        <i>وضعیت پرداختی </i>
+                                        <span class="float-end">خریداری شده</span>
+                                    }
+                                    else
+                                    {
+                                        <i>قیمت دوره </i>
+                                        <span class="float-end ">@Model.CoursePrice.ToString("#,0") تومان</span>
+                                    }
+                                </li>
+                            }
+                            else
+                            {
+                                <li>
+                                    <a href="jvascript:void(0)">قیمت دوره </a> <span class="float-end text-success"> رایگان </span>
+                                </li>
+                            }
+                            <li>
+                                <i>تعداد دانشجو ها </i> <span class="float-end">@Model.CourseEpisodes.Count </span>
+                            </li>
+                            <li>
+                                <i>تاریخ ثبت این دوره </i> <span class="float-end">@Model.CreateDate.ToShamci()</span>
+                            </li>
+                            <li>
+                                <i>وضعیت اشتراک دوره </i> <span class="float-end">@Model.UpdateDate?.ToShamci()</span>
+                            </li>
+                            @* <li> *@
+                            @*     <i>آخرین بروزرسانی دوره </i> <span class="float-end">@Model.UpdateDate?.ToShamci()</span> *@
+                            @* </li> *@
+
+                            @if (!isUserBuyCourse)
+                            {
+                                <li>
+                                    <a class="buy btn btn-pills btn-warning mt-2 me-2  text-center text-white pull-left " href="/Course/BuyCourse/@Model.CourseId">شرکت در دوره : @Model.CoursePrice.ToString("#,0") تومان</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    <!-- وضعیت دوره -->
+                    @if (Model.Tags != null)
+                    {
+                        <div class="widget mb-4 pb-2">
+                            <h5 class="widget-title">تگ ها</h5>
+                            <div class="tagcloud mt-4">
+                                @foreach (string tag in Model.Tags.Split("-", StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <a href="/Course?filter=@tag" class="rounded">@tag</a>
+
+                                }
+                            </div>
+
+                        </div>
+                    }
+                    <!-- TAG CLOUDS -->
+                    <!-- SOCIAL -->
+                    <div class="widget">
+                        <h5 class="widget-title">به اشتراک گذاری دوره</h5>
+                        <ul class="list-unstyled social-icon mb-0 mt-4">
+                            <li class="list-inline-item"><a href="https://www.facebook.com/sharer/sharer.php?u=https://Asancode.com/CourseDetails/@Model.CourseId" target="_blank" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook fea icon-sm fea-social"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a></li>
+                            <li class="list-inline-item"><a href="https://twitter.com/share?text=@Model.CourseTitle&url=https://Asancode.com/CourseDetails/@Model.CourseId" target="_blank" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter fea icon-sm fea-social"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a></li>
+                            <li class="list-inline-item"><a href="http://www.linkedin.com/shareArticle?mini=true&url=https://Asancode.com/CourseDetails/@Model.CourseId&title=@Model.CourseTitle"  target="_blank"    class="rounded" title="linkedin"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin fea icon-sm fea-social"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+                            <li class="list-inline-item"><a href="mailto:?subject=@Model.CourseTitle&body=https://Asancode.com/CourseDetails/@Model.CourseId" target="_blank"  class="rounded">   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail fea icon-sm fea-social"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a></li>
+                            <li class="list-inline-item"><a href="https://www.instagram.com/accounts/login/" target="_blank">
+                                    <img class="blog-sociallink text-white" src="/UserPanel/instagram2.png" alt="به اشتراک گذاری در اینستا گرام" target="_blank" width="29">
+                                </a>
+                            </li>
+                        </ul><!--end icon-->
+                    </div>
+                    <!-- SOCIAL -->
+                    <!-- shortlink -->
+                    @* <div class="mt-10 text-center ">
+                            لینک کوتاه :
+                        </div>
+                        <div class="page-next">
+                            @{
+                                string link="https://asancode.com/c/"+Model.ShortKey;
+                            }
+                            <nav  class=" bg-white rounded shadow mb-0 p-2 float-start">
+
+                                <a id="matn" title="لینک کوتاه"  href="@(link)">@("https://asancode.com/c/"+Model.ShortKey)
+                                    
+                                </a>
+                                <a tooltype="link"  title="کپی کن" href="javascript:void(0)">
+                                    <i class="uil-copy text-danger bg-white p-1"  onclick="copyToClipboard('#matn')"> </i>
+                                </a>
+                                
+                            </nav>
+                        </div><br /><br />
+                        <p id="short-link-message" class="text-center d-block"></p>
+                       *@
+                </div>
+                @if (isUserBuyCourse)
+                {
+                    <div class="card-body mt-0">
+                        <p class="text-center  text-muted mb-2">دانشجویانی که در این دوره شرکت کرده اند میتوانند با استفاده از لینک زیر سوالات خود را در مورد این آموزش بپرسند</p>
+                        <div class="box-Social-Linnk text-center box-Social-shadow Social-Linnk p-relative">
+                            <a class="btn  text-center btn-pills btn-info mt-2 me-2 pull-left" asp-controller="Forum" asp-action="Index" asp-route-courseId="@Model.CourseId">پرسش وپاسخ </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div><!--end col-->
+            <!-- END SIDEBAR -->
+        </div><!--end row-->
+    </div><!--end container-->
+</section>
+@section Scripts{
+    <script src="/js/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        $(function() {
+            $("#listComment").load("/Course/ShowComment/" + @Model.CourseId);
+        });
+        function pageComment(pageid) {
+            $("#listComment").load("/Course/ShowComment/" + @Model.CourseId +"?pageId=" + pageid);
+        }
+        function Success() {
+            $("#comments_Comment").val(" ");
+        };
+        $(function() {
+            $("#vot").load("/Course/CourseVote/@Model.CourseId");
+        });
+        function vote(vote) {
+            $("#vot").fadeOut('slow');
+            $("#vot").load("/Course/AddVote/@(Model.CourseId)?vote=" + vote);
+            $("#vot").fadeIn('slow');
+        }
+        function copyToClipboard(element) {
+            var $temp = $("<input>");
+            $("body").append($temp);
+            $temp.val($(element).text()).select();
+            document.execCommand("copy");
+            $temp.remove();
+            var textpalert = document.getElementById("short-link-message");
+            textpalert.innerHTML = "کپی شد!";
+        }
+         $(document).ready(function(){
+           $("i.uil-copy").click(function(){
+           $("#short-link-message").fadeOut(3000);
+                                });
+                             });
+    </script>
+    <script src="https://cdn.ckeditor.com/4.9.2/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('comments.Comment', {
+            customConfig: '/js/Config.js'
+        });
+    </script>
+
+}
+

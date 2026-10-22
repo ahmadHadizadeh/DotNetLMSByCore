@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Asancode.Web", "Asancode.Web\Asancode.Web.csproj", "{B8266553-D010-4E12-A9EC-2CEDF962DBF7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{B656BA26-1BAF-4771-8BF7-A286B82A65FE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataLayer", "DataLayer\DataLayer.csproj", "{1D53A696-04D6-4573-A59F-847B08927E00}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B8266553-D010-4E12-A9EC-2CEDF962DBF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8266553-D010-4E12-A9EC-2CEDF962DBF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8266553-D010-4E12-A9EC-2CEDF962DBF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8266553-D010-4E12-A9EC-2CEDF962DBF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B656BA26-1BAF-4771-8BF7-A286B82A65FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B656BA26-1BAF-4771-8BF7-A286B82A65FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B656BA26-1BAF-4771-8BF7-A286B82A65FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B656BA26-1BAF-4771-8BF7-A286B82A65FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D53A696-04D6-4573-A59F-847B08927E00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D53A696-04D6-4573-A59F-847B08927E00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D53A696-04D6-4573-A59F-847B08927E00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D53A696-04D6-4573-A59F-847B08927E00}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E4190A86-0D85-469F-B608-E16A41200644}
+	EndGlobalSection
+EndGlobal

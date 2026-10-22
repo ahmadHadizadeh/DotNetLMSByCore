@@ -1,0 +1,79 @@
+﻿@model Core.DTO.EditProfileViewModel
+@{
+    ViewData["Title"] = "ویرایش حساب کاربری";
+}
+<partial name="_HeaderUserpanel" />
+<section class="section mt-60">
+    <div class="container mt-lg-3">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-12">
+                <div class="card border-0 rounded shadow">
+                    <h5 class="text-md-start text-center"> ویرایش پروفایل:</h5>
+                    <div class="card-body">
+                        <p class="text-white alert alert-warning text-center">کاربرگرامی:لطفا توجه داشته باشد جهت تغیرات حتما عکس را نیزدوباره بارگذاری کنید درغیر اینصورت تغییر حاصل نمیگردد.</p>
+                        <h6 class="text-md-start text-center">جزئیات شخصی :</h6>
+                        <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                            <input type="hidden" asp-for="ImageName" />
+                            <div class="mt-3 text-md-start text-center d-sm-flex">
+                                <img id="Myimagesrc" src="/UserPanel/@Model.ImageName" class="avatar float-md-left avatar-medium rounded-circle shadow me-md-4" alt="عکس پروفایل @Model.ImageName">
+                                <div class="mt-md-4 mt-3 mt-sm-0">
+                                    <input class="btn btn-primary mt-2" type="file" id="UplodImg" asp-for="ImageUser" />
+                                    <p class="help-block text-right">
+                                        انتخاب عکس جدید
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">نام اصلی </label>
+                                        <div class="form-icon position-relative">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user fea icon-sm icons"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                            <input type="text" asp-for="UserName" class="form-control ps-5">
+                                        </div>
+                                    </div>
+                                </div><!--end col-->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">ایمیل شما </label>
+                                        <div class="form-icon position-relative">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail fea icon-sm icons"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                            <input type="email" asp-for="Email" class="form-control ps-5">
+                                        </div>
+                                    </div>
+                                </div><!--end col-->
+                            </div><!--end row-->
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <input type="submit" name="send" class="btn btn-primary" value="ذخیره تغییرات">
+                                </div><!--end col-->
+                            </div><!--end row-->
+                        </form><!--end form-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts
+{
+    <script>
+
+        //OnTime Upload Img
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#Myimagesrc').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]); // convert to base64 string
+            }
+        }
+
+        $("#UplodImg").change(function () {
+            readURL(this);
+        });
+    </script>
+}

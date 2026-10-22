@@ -1,0 +1,141 @@
+﻿@using Core.DTO
+@using Core.DTO.Banner
+@model IEnumerable<Core.DTO.ShowCourseItemViewModel>
+@{
+    ViewData["Title"] = "خانه";
+}
+<!-- Hero Start -->
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 col-12">
+                <div class="title-heading">
+                    <h1 class="animate__animated  animate__zoomInDown" style="color: #46b281; text-shadow: 2px 2px 3px #156767 ">رسانه آموزش برنامه نویسی <br> آسان کد </h1>
+                    <p class="para-desc text-muted"> پیشرفت خود را شروع کنید و در خانه یا محل کار خود با ما رشد کنید </p>
+                    <p class="para-desc text-muted"> یادگیری و کسب مهارت در برنامه نویسی را از شروع تا ورود به بازارکار را به ما پسپارید</p>
+                </div>
+            </div><!--end col-->
+
+            <div class="col-md-6 mt-4 pt-2 mt-sm-0 pt-sm-0">
+                <img src="/UserPanel/imglanding.png" class="img-fluid d-block mx-auto" alt="">
+            </div><!--end col-->
+        </div><!--end row-->
+        <div class="row justify-content-center">
+            <div class="col-lg-12 col-12 text-center">
+                <div class="page-next-level">
+                    <div class="subcribe-form mt-2 pt-2">
+                        <form action="/Course" method="get">
+                            <div class="mb-0">
+                                <input type="text" name="filter" id="filluser" class="border bg-white rounded-pill"  placeholder=" آموزش خود راجستجو کنید...">
+                                <button type="submit" class="btn btn-pills btn-success">جستجو </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div>
+    </div><!--end container-->
+</section><!--end section-->
+<!-- Banner Information site-->
+
+@{
+    List<BannerInfoViewModel> banner = ViewBag.listBanner as List<BannerInfoViewModel>;
+}
+@if (banner != null)
+{
+    foreach (var item in banner)
+    {
+       <partial name="_Banner" model="@banner" />
+    }
+}
+    
+<!-- Banner Information site-->
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+<section class="section" id="courses">
+    <div class="container">
+        <div class="row justify-content-center ">
+            <div class="col-md-8 text-center">
+                <div class="section-title mb-4 pb-2">
+                    <h4 class="title mb-4">دوره های آسان کد </h4>
+                    <p class="text-muted para-desc mx-auto mb-0"><span class="text-primary fw-bold">آکادمی آموزشی آسان کد  </span> هر آنچه در مورد برنامه نویسی بخواهید را به صورت آنلاین و حضوری خدمت شما ارائه می دهد.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mt-4 mt-sm-0">
+                <div class="text-center text-md-end">
+                    <a href="/Course" class="btn btn-soft-primary">نمایش بیشتر <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left fea icon-sm"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a>
+                </div>
+            </div><!--end col-->
+        </div>
+        <div class="row">
+            <cache expires-after="@TimeSpan.FromMinutes(10)">
+                @await Component.InvokeAsync("CourseCacheComponent")
+            </cache>
+        </div>
+        <div class="row justify-content-center mt-3">
+            <div class="col-12 text-center">
+                <div class="section-title mb-4 pb-2">
+                    <h4 class="title mb-4"> محبوب ترین دوره های آسان کد </h4>
+                    <p class="text-muted para-desc mx-auto mb-0"><span class="text-primary fw-bold"> تیم آموزشی  آسان کد </span>  در نظر دارد دوره های آموزشی را به صورت پروژه محور و مفهومی  برای شما ارائه بکند تا درک عمیقی از هر آموزش بدست آورید. </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            @{
+                List<ShowCourseItemViewModel> popular = ViewBag.listCoursePopular as List<ShowCourseItemViewModel>;
+            }
+            @if (popular != null)
+            {
+                foreach (var item in popular)
+                {
+                    <partial name="_BoxCourse" model="@item" />
+
+                }
+            }
+        </div>
+    </div>
+</section>
+<section class="section" id="courses">
+    <div class="container  mt-lg-0">
+        <div class="row align-items-center mb-4 pb-2">
+            <div class="col-md-8">
+                <div class="section-title text-center text-md-start">
+                    <h4 class="title mb-4"> <a class="text-dark" href="/Blog">مقالات وب سایت  </a></h4>
+                </div>
+            </div><!--end col-->
+            <div class="col-md-4 mt-4 mt-sm-0">
+                <div class="text-center text-md-end">
+                    <a href="/Blog" class="btn btn-soft-primary">نمایش بیشتر <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left fea icon-sm"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></a>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+        <div class="row">
+            @{
+                List<ShowBlogViewModel> blog = ViewBag.listBlog as List<ShowBlogViewModel>;
+            }
+            @if (blog != null)
+            {
+                foreach (var item in blog)
+                {
+                    <partial name="_Boxblog" model="@item" />
+
+                }
+            }
+        </div><!--end row-->
+    </div>
+</section>
+@section Scripts
+{
+    <script>
+        $(document).ready(function () {
+            $("#filluser").autocomplete({
+                source: 'api/ProductApi/search'
+            });
+        });
+    </script>
+}

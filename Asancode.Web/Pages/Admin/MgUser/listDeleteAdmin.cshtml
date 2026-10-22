@@ -1,0 +1,95 @@
+﻿@page
+@using Core.Convertors
+@model Asancode.Web.Pages.Admin.MgUser.listDeleteAdminModel
+@{
+    ViewData["Title"] = "لیست حذف شده ها";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">لیست حذف شده ها</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="col-lg-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            حذف  کاربران
+        </div>
+        <!-- /.panel-heading -->
+        <div class="panel-body">
+            <div class="table table-responsive">
+                <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                    <div class="row">
+                        <form>
+                            <div class="col-md-5 col-sm-5">
+                                <input name="filterUserName" class="form-control" type="text" placeholder="لطفا نام مورد نظر را وارد کنید" />
+                            </div>
+                            <div class="col-md-5 col-sm-5">
+                                <input name="filterEmail" type="text" class="form-control" placeholder="لطفا ایمیل مورد نظر را وارد کنید" />
+                            </div>
+                            <div class="col-md-2 col-sm-2">
+                                <button class="btn btn-success"> جستجو</button>
+                                <a href="/Admin/MgUser" class="btn btn-warning"> Clear Filter</a>
+                            </div>
+                        </form>
+                        <div class="col-md-12 col-sm-9 justify-content-center" style="padding: 15px 15px 10px 0;">
+                        </div>
+                        <table class="table table-bordered table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>نام </th>
+                                    <th> ایمیل</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.AdminUserViewModel.userse)
+                                {
+                                    <tr>
+                                        <td>@user.UserName</td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            @if (user.IsActive)
+                                            {
+                                                <p class="text-success">فعال</p>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-danger">غیرفعال</p>
+                                            }
+                                        </td>
+                                        <td>@user.RegisterDate.ToShamci()</td>
+                                        @*<td>
+                                                <a class="btn btn-sm btn-danger" href=""> حذ ف</a>
+                                                <a class="btn btn-sm btn-warning" href="/Admin/MgUser/EditAdmin/@user.UserId">و یرا یش</a>
+                                            </td>*@
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div class="row">
+                            <div class="col-sm-6 text-left ">
+                                <div class="dataTables_paginate">
+                                    <ul class="pagination">
+                                        @for (int i = 1; i <= Model.AdminUserViewModel.PageCount; i++)
+                                        {
+                                            <li class="paginate_button @((i == Model.AdminUserViewModel.CurrentPage) ? "active" : "")" aria-controls="dataTables-example" tabindex="0">
+                                                <a href="/Admin/MgUser?PageId=@i">@i</a>
+                                            </li>
+
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.table-responsive -->
+            </div>
+            <!-- /.panel-body -->
+        </div>
+        <!-- /.panel -->
+    </div>
+</div>

@@ -1,0 +1,46 @@
+﻿@using Core.Convertors
+@using Core.DTO
+@using Core.Services.Interfaces
+@inject IUserService _UserService
+@{ SidbarViewModel UserModel = _UserService.GetInformationBySidbar(User.Identity?.Name); }
+
+<section class="bg-profile d-table w-100 bg-primary " style="background: url('/images/account/bg.png') center center;">
+    <div class="container mb-2">
+        <div class="row">
+            <div class="col-lg-11 col-md-10 col-10 d-sm-block ">
+                <div class="card public-profile border-0 rounded shadow" style="z-index: 1;">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-lg-2 col-md-3 text-md-start text-center">
+                                <img src="/UserPanel/@UserModel.Image" class="avatar avatar-large rounded-circle shadow d-block mx-auto" alt="@UserModel.UserName عکس پروفایل">
+                            </div><!--end col-->
+                            <div class="col-lg-10 col-md-9">
+                                <div class="row align-items-end">
+                                    <div class="col-md-7 text-md-start text-center mt-4 mt-sm-0">
+                                        <h3 class="title mb-0">@UserModel.UserName</h3>
+                                        <small class="text-muted h6 me-2">دانشجو</small>
+                                        <ul class="list-inline mb-0 mt-3">
+                                            <li class="list-inline-item me-2">
+                                                <a href="javascript:void(0)" class="text-muted" title="تاریخ عضویت">
+                                                    <span class="h4 mb-0"><i class="uil uil-dashboard"></i></span>
+                                                    تاریخ عضویت:@UserModel.registerDate.ToShamci()
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <!--end col-->
+                                    <div class="col-md-5 text-md-end text-center">
+                                        <ul class="list-unstyled social-icon social mb-0 mt-4">
+                                            <li class="list-inline-item"><a href="/UserPanel" class="rounded" data-bs-toggle="tooltip" data-bs-placement="bottom" title="" data-bs-original-title="تنظیمات" aria-label="تنظیمات"><i class="uil uil-cog align-middle"></i></a></li>
+                                        </ul><!--end icon-->
+                                    </div><!--end col-->
+                                </div><!--end row-->
+                            </div><!--end col-->
+                        </div><!--end row-->
+                    </div>
+                </div>
+            </div>
+            <!--end col-->
+        </div><!--end row-->
+    </div><!--end container-->
+</section>

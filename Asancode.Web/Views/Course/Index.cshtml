@@ -1,0 +1,280 @@
+﻿@using DataLayer.Course
+@model Tuple<List<Core.DTO.ShowCourseItemViewModel>, int>
+@{ ViewData["Title"] = "تمام آموزش های آسان کد"; }
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h3> </h3>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account">لیست همه آموزشهای آسان کد</i></li>
+                    </ul>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="/Course">همه آموزشهای آسان کد </a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+
+<!--Start Course-->
+<section class="section">
+    <div class="container">
+        <form id="formFilter" action="/Course" method="get">
+            <input type="hidden" id="pageid" name="pageId" value="@ViewBag.pageId.ToString()" />
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-12">
+                    <div class="card border-0 sidebar sticky-bar">
+                        <div class="card-body p-0">
+                            <!-- SEARCH -->
+                            <div class="widget">
+                                    <div class="input-group mb-3 border rounded">
+                                        <input type="text" name="filter" class="form-control border-0" placeholder="جستجوی کلمه کلیدی...">
+                                        <button type="submit" class="input-group-text bg-white border-0" id="searchsubmit"><i class="uil uil-search"></i></button>
+                                    </div>
+                            </div>
+                            <!-- SEARCH -->
+                            @{
+
+                                List<CourseGroup> groups = ViewBag.Groups as List<CourseGroup>;
+                                List<int> select = ViewBag.selecteCheckBox as List<int>;
+                            }
+                            <!-- Categories -->
+                            <div class="widget mt-4 pt-2">
+                                <h5 class="widget-title">دسته بندیها </h5>
+                                <ul class="list-unstyled mt-4 mb-0 blog-categories">
+                                    @foreach (var group in groups.Where(c => c.ParentId == null))
+                                    {
+                                        <li>
+                                            <input type="checkbox" class="form-check-input" onchange="selectCourse()" @((select.Any(s => s == group.GroupId) ? "checked" : "")) name="selectedGroup" value="@group.GroupId" id="cat-1">
+                                            <label class="form-check-label" for="cat-1">@group.GroupTitle </label>
+                                            @if (groups.Any(g => g.ParentId == group.GroupId))
+                                            {
+                                                <ul>
+                                                    @foreach (var sub in groups.Where(g => g.ParentId == group.GroupId))
+                                                    {
+                                                        <li>
+                                                            <input class="form-check-input" type="checkbox" onchange="selectCourse()" @((select.Any(s => s == sub.GroupId) ? "checked" : "")) name="selectedGroup" value="@sub.GroupId" id="cat-1" />
+                                                            <label class="form-check-label" for="cat-1">@sub.GroupTitle</label>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+
+                                        </li>
+                                    }
+
+                                </ul>
+                            </div>
+                            <!-- Categories -->
+                        </div>
+                    </div>
+                </div><!--end col-->
+
+                <div class="col-lg-9 col-md-8 col-12 mt-5 pt-2 mt-sm-0 pt-sm-0">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8 col-md-7">
+                            <div class="section-title">
+                                <h5 class="mb-0">نمایش @Model.Item1.Count از @Model.Item1.Count نتیجه</h5>
+                            </div>
+                        </div><!--end col-->
+                        <div class="col-lg-7 col-md-6 col-sm-5">
+                            <!--CheckBox-->
+                            <div class="p-3">
+                                <div class="form-check form-check-inline">
+                                    <div class="mb-0">
+                                        <div class="form-check">
+                                            <input id="available-filter-1" type="checkbox" class="form-check-input" name="typeShow" checked="checked" value="all">
+                                            <label class="form-check-label" for="available-filter-1">همه </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-check form-check-inline">
+                                    <div class="mb-0">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="available-filter-2" name="typeShow" value="buy">
+                                            <label class="form-check-label" for="available-filter-2">پولی </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-check form-check-inline">
+                                    <div class="mb-0">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="available-filter-3" name="typeShow" value="free">
+                                            <label class="form-check-label" for="available-filter-3">رایگان </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--End CheckBox-->
+                        </div>
+                        <!--OrderBy-->
+                        <div class="col-lg-4 col-md-5 mt-4 mt-sm-0 pt-2 pt-sm-0">
+                            <div class="d-flex justify-content-md-between align-items-center">
+                                <div class="form custom-form">
+                                    <div class="mb-0">
+                                        <select class="form-select form-control" aria-label="Default select example" id="Sortbylist-job">
+                                            <option selected="selected" name="orderBy">مرتب سازی بر اساس آخرین</option>
+                                            <option>مرتب سازی بر اساس محبوبیت</option>
+                                            <option value="date">مرتب سازی بر اساس تاریخ</option>
+                                            <option value="updateDate">مرتب سازی بر اساس برروزرسانی جدید </option>
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <!--End OrderBy-->
+                                
+                            </div>
+                        </div><!--end col-->
+                    </div><!--end row-->
+
+                    <div class="row">
+                        <!--start corse-->
+                        @foreach (var item in Model.Item1)
+                        {
+                            <div class="col-lg-4 col-md-6 col-sm-6 col-12 mt-4 pt-2">
+                                <div class="card courses-desc overflow-hidden rounded shadow border-0">
+                                    <div class="position-relative d-block overflow-hidden">
+                                        <img src="/course/Thumnail/@item.ImageName"  class="img-fluid rounded-top mx-auto" alt="عکس دوره آموزش">
+                                        <div class="overlay-work bg-dark"></div>
+                                        <a href="/CourseDetails/@item.CourseId/@item.Title.Trim().Replace(" ", "-")" class="text-white h6 preview">نمایش آنلاین  <i class="uil uil-angle-left-b align-middle"></i></a>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6><a href="/CourseDetails/@item.CourseId/@item.Title.Trim().Replace(" ", "-")" class="title text-dark">@item.Title</a></h6>
+                                        
+                                        <div class="fees d-flex justify-content-between">
+                                            <ul class="list-unstyled mb-0 numbers">
+                                                <li><i class="uil uil-graduation-cap text-muted "></i>@item.UserCourse.Count </li>
+                                                @{
+                                                    TimeSpan time = new TimeSpan(item.CourseEpisodes.Sum(e => e.EpisodeTime.Ticks));
+                                                }
+                                                <li><i class="uil uil-notebooks text-muted"></i>@time</li>
+                                            </ul>
+                                            <h4><span class="h6">@((item.Price == 0) ? "رایگان" : item.Price.ToString("#,0"))</span> </h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+                        <!--end corse-->
+                        <!-- PAGINATION START -->
+                        <div class="col-12 mt-4 pt-2">
+                            @if (Model.Item2 > 1)
+                            {
+                                <ul class="pagination justify-content-center mb-0">
+                                    @for (int i = 1; i <= Model.Item2; i++)
+                                    {
+                                        <li class="page-item"><a class="page-link" href="/Course?pageId=@i">@i</a></li>
+                                    }
+                                </ul>
+                            }
+                        </div><!--end col-->
+                        <!-- PAGINATION END -->
+                    </div><!--end row-->
+                </div><!--end col-->
+            </div><!--end row-->
+        </form>
+    </div><!--end container-->
+</section>
+@section Scripts
+{
+    <script src="/css/noUiSlider/nouislider.min.js"></script>
+    <script src="/js/scripts.js"></script>
+    <script type="text/javascript">
+        $(function() {
+
+            var slider = document.getElementById('priceFilter');
+            noUiSlider.create(slider,
+                {
+                    start: [20000, 100000],
+                    step: 5000,
+                    connect: true,
+                    direction: 'rtl',
+                    range: {
+                        'min': 20000,
+                        'max': 100000
+                    }
+                });
+
+            var marginMin = document.getElementById('min-text'),
+                marginMax = document.getElementById('max-text');
+
+            slider.noUiSlider.on('update',
+                function(values, handle) {
+                    var xvalue = Math.round(values[handle]);
+                    if (handle) {
+                        marginMax.innerHTML = xvalue;
+                    } else {
+                        marginMin.innerHTML = xvalue;
+                    }
+                    //console.log(values[handle]);
+                });
+
+            slider.noUiSlider.on('change',
+                function(values, handle) {
+                    var xvalue = Math.round(values[handle]);
+                    if (handle) {
+                        // setGetParameter('max_price', xvalue);
+                        $('#max-value').val(xvalue);
+                    } else {
+                        // setGetParameter('min_price', xvalue);
+                        $('#min-value').val(xvalue);
+                    }
+                });
+
+
+            slider.noUiSlider.on('slide',
+                function(values, handle) {
+
+                    console.log(values[0]);
+                    console.log(values[1]);
+
+                    var xvalue = Math.round(values[handle]);
+                    //updateSliderRange( Math.round(values[0]), Math.round(values[1]) );
+                });
+
+
+            function updateSliderRange(min, max) {
+                slider.noUiSlider.updateOptions({
+                    range: {
+                        'min': min,
+                        'max': max
+                    }
+                });
+            }
+        });
+
+        function changePage(pageid) {
+            $("#pageid").val(pageid);
+
+            $("#formFilter").submit();
+        }
+
+        function selectCourse() {
+
+            $("#formFilter").submit();
+        }
+        function selectdate() {
+
+            $("#formFilter").submit();
+        }
+     
+    </script>
+}

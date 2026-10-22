@@ -1,0 +1,18 @@
+﻿#listrole ul {
+    list-style-type: none;
+    margin-right: 10px;
+    padding: 0px 13px;
+    margin-bottom: 0px
+}
+
+
+    #listrole ul li {
+        padding: 0px 3px 0px 0px;
+        margin-right: 5px;
+        margin-bottom: 0px
+    }
+
+        #listrole ul li input {
+            margin-right: 10px;
+            margin-bottom: 0px
+        }

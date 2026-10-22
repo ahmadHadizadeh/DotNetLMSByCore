@@ -1,0 +1,67 @@
+﻿@using System.Linq
+@using Core.Convertors
+@using Core.DTO
+@model IEnumerable<DataLayer.Entities.Order.UserCourse>
+@{
+    ViewData["Title"] = "MyCourse";
+    int row = 1;
+}
+
+<h1>MyCourse</h1>
+
+<partial name="_HeaderUserpanel" />
+<section class="section ">
+    <div class="container mt-lg-3">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="rounded shadow p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">دوره های شما</h5>
+                        <hr />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mt-4 pt-2 text-center justify-content-center">
+                            <div class="card rounded shadow bg-light border-0">
+                                <div class="card-body p-3">
+                                   @*<input type="hidden" value="@ViewBag.user"/>*@
+                                    <div class="mt-4">
+                                        <div class="table table-responsive bg-white shadow-md rounded-md mb-2" style="direction: rtl">
+
+                                            <table class="table mb-0 table-center">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" class="border-bottom">ردیف</th>
+                                                        <th scope="col" class="border-bottom" style="min-width: 250px;">دوره آموزشی </th>
+                                                    </tr>
+                                                </thead>
+                                                @foreach (var item in Model)
+                                                {
+                                                    <tr>
+                                                        <td>@row</td>
+                                                        <td>
+                                                            <a class="text-right text-info " href="/CourseDetails/@item.CourseId/@item.Courses.CourseTitle.Trim().Replace(" ", "-")" target="_blank">@item.Courses.CourseTitle</a>
+                                                        </td>
+
+                                                    </tr>
+                                                    row += 1;
+                                                }
+
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!--end col-->
+                    </div>
+                </div>
+            </div>
+        </div><!--end row-->
+    </div><!--end container-->
+
+</section>
+
+

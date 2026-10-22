@@ -1,0 +1,54 @@
+﻿@page
+@using DataLayer.Entities.User
+@model Asancode.Web.Pages.Admin.roles.IndexModel
+@{
+    ViewData["Title"] = "مدیریت نقش ها";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">مدیریت نقش ها</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="col-lg-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            مدیریت نقش ها
+        </div>
+        <!-- /.panel-heading -->
+        <div class="panel-body">
+            <div class="table table-responsive">
+                <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-9 justify-content-center" style="padding: 15px 15px 10px 0;">
+                            <a href="/Admin/roles/CreateRole" class="btn  btn-success">افزودن نقش جدید</a>
+                        </div>
+                        <table class="table table-bordered table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>عنوان نقش ها </th>
+                                    <th>عمیلات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var roles in Model.listRoles)
+                                {
+                                    <tr>
+                                        <td>@roles.RolesTitles</td>
+                                        <td>
+                                            <a class="btn btn-sm btn-danger" href="/Admin/roles/DeleteRoles/@roles.RoleId"> حذ ف</a>
+                                            <a class="btn btn-sm btn-warning" href="/Admin/roles/EditRoles/@roles.RoleId">و یرا یش</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- /.table-responsive -->
+            </div>
+            <!-- /.panel-body -->
+        </div>
+        <!-- /.panel -->
+    </div>
+</div>

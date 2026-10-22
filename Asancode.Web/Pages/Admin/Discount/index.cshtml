@@ -1,0 +1,56 @@
+﻿@page
+@using Core.Convertors
+@model Asancode.Web.Pages.Admin.Discount.indexModel
+@{
+    ViewData["Title"] = "index";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">لیست دوره ها</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="col-lg-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            لیست  تخفیف ها
+        </div>
+        <!-- /.panel-heading -->
+        <div class="panel-body">
+            <div class="table table-responsive">
+                <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <a href="/Admin/Discount/CreateDiscount" class="btn btn-outline btn-success"> ایجاد تخفیف جدید</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-bordered table-striped table-hover ">
+                <thead>
+                    <tr>
+                        <th> کد تخفیف</th>
+                        <th>تعداد </th>
+                        <th>تاریخ شروع </th>
+                        <th> تاریخ پایان</th>
+                        <th> عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Discounts)
+                    {
+                        <tr>
+                            <td>@item.DiscountCode</td>
+                            <td>@item.Count</td>
+                            <td>@((item.StartDate != null) ? item.StartDate.Value.ToShamci() : "")</td>
+                            <td>@((item.EndDate != null) ? item.EndDate.Value.ToShamci() : "")</td>
+                            <td>
+                                <a class="btn btn-smb btn-info" href="/Admin/Discount/EditDiscount/@item.DiscountId">و یرا یش</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

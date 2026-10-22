@@ -1,0 +1,27 @@
+﻿@using Microsoft.EntityFrameworkCore
+@model Core.DTO.ShowCourseItemViewModel
+@*
+    <div class="col-xs-12 col-lg-3 col-md-5 col-sm-6 col-12 mt-4 pt-2"> *@
+<div class="col-lg-4 col-md-6 mt-4 pt-2">
+    <div class="card courses-desc overflow-hidden rounded shadow border-0">
+        <div class="position-relative d-block overflow-hidden">
+            <img src="/course/Thumnail/@Model.ImageName" class="img-fluid rounded-top mx-auto" alt="عکس دوره آموزش">
+            <div class="overlay-work bg-dark"></div>
+            <a href="/CourseDetails/@Model.CourseId/@Model.Title.Trim().Replace(" ", "-")" class="text-white h6 preview">نمایش آنلاین  <i class="uil uil-angle-left-b align-middle"></i></a>
+        </div>
+        <div class="card-body">
+            <h6 class="title "><a href="/CourseDetails/@Model.CourseId/@Model.Title.Trim().Replace(" ", "-")" class="title text-dark">@Model.Title</a></h6>
+            <div class="fees d-flex justify-content-between">
+                @{
+
+                    TimeSpan time = new TimeSpan(Model.CourseEpisodes.Sum(e => e.EpisodeTime.Ticks));
+                }
+                <p class="text-right pagination">
+                    <h6 class="text-muted"><i class="uil uil-clock text-muted page-item">@time</i> </h6>
+                    <h6><i class="uil uil-dollar-alt text-muted page-item"> @((Model.Price == 0) ? "رایگان" : Model.Price.ToString("#,0"))</i></h6>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end col-->

@@ -1,0 +1,39 @@
+@using Core.Convertors
+@model Tuple<List<DataLayer.Entities.Course.CourseComment>, int>
+@{ Layout = null; }
+<div class="d-flex justify-content-between p-4 bg-light">
+
+  <h6 class="mb-0">  <i class="uil uil-comment-add text-muted "></i> نظرات </h6>
+  <h6 class="mb-0">تاریخ </h6>
+</div>
+@foreach (var item in Model.Item1)
+{
+ <div class="p-4">
+  <div class="d-flex justify-content-between">
+    <div class="d-flex align-items-center">
+      <a class="pe-3" href="#">
+        <img src="/UserPanel/@item.User.UserImage" class="img-fluid avatar avatar-md-sm rounded-circle shadow" alt="تصویر کاربرنظر دهنده">
+      </a>
+      <div class="flex-1 commentor-detail">
+        <h6 class="mb-0"><a href="javascript:void(0)" class="media-heading text-dark">@item.User.UserName </a></h6>
+
+      </div>
+    </div>
+    <small class="text-muted">@item.CreateDate.ToShamci() </small>
+  </div>
+  <div class="mt-3">
+    <i class="uil uil-comment text-muted h5"></i>
+    <p class="">@Html.Raw(@item.Comment) </p>
+  </div>
+  </div>
+}
+
+<div class="col-12 mt-4 pt-2">
+  <ul class="pagination justify-content-center mb-3">
+    <li class="page-item"><a class="page-link" href="javascript:void(0)" aria-label="Previous">قبلی </a></li>
+    @for (int i = 1; i <= Model.Item2; i++)
+    {
+<li class="page-item"><a href="javascript:void(0)" class="page-link" onclick="pageComment(@i)">@i</a></li>}
+    <li class="page-item"><a class="page-link" href="javascript:void(0)" aria-label="Next">بعدی </a></li>
+  </ul>
+</div><!--end col-->

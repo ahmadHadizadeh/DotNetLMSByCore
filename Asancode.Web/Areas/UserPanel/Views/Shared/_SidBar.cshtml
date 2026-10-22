@@ -1,0 +1,94 @@
+﻿@using Core.Services.Interfaces
+@inject IUserService _userService
+@inject IPermissionService _permissionService
+<div class="col-lg-3 col-md-10 col-sm-10 col-10 d-sm-block ">
+    <div class="sidebar sticky-bar p-4 rounded shadow">
+        <!--Dashboard User -->
+        <div class="widget mt-4">
+            <ul class="list-unstyled sidebar-nav mb-0" id="navmenu-nav">
+                <li class="navbar-item account-menu px-0 active">
+                    <a href="/UserPanel" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-dashboard"></i></span>
+                        <h6 class="mb-0 ms-2">داشبورد</h6>
+                    </a>
+                </li>
+
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/UserPanel/EditProfile" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-users-alt"></i></span>
+                        <h6 class="mb-0 ms-2">ویرایش </h6>
+                    </a>
+                </li>
+
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/UserPanel/ChangePassword" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-edit"></i></span>
+                        <h6 class="mb-0 ms-2"> تغییر رمز عبور </h6>
+                    </a>
+                </li>
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/MyCourse" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-book-open"></i></span>
+                        <h6 class="mb-0 ms-2"> دوره های شما </h6>
+                    </a>
+                </li>
+
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/UserPanel/Wallet" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-transaction"></i></span>
+                        <h6 class="mb-0 ms-2">کیف پول </h6>
+                    </a>
+
+                </li>
+
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/UserPanel/MyOrder" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-receipt"></i></span>
+                        <h6 class="mb-0 ms-2">فاکتور ها </h6>
+                    </a>
+
+                </li>
+
+                <li class="navbar-item account-menu px-0 mt-2">
+                    <a href="/Logout" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                        <span class="h4 mb-0"><i class="uil uil-sign-out-alt"></i></span>
+                        <h6 class="mb-0 ms-2">خروج از حساب کاربری </h6>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!--End Dashboard User -->
+        <!--Dashboard Teacher -->
+        @if (_permissionService.CheckAcsessPermissionRole(2, User.Identity.Name))
+        {
+            <div class="widget mt-4">
+                <ul class="list-unstyled sidebar-nav mb-0" id="navmenu-nav">
+                    <li class="navbar-item account-menu px-0 active">
+                        <a href="/UserPanel" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                            <span class="h4 mb-0"><i class="uil uil-dashboard"></i></span>
+                            <h6 class="mb-0 ms-2">پنل مدرس</h6>
+                        </a>
+                    </li>
+                    <li class="navbar-item account-menu px-0 mt-2">
+                        <a asp-controller="Teacher" asp-action="TeacherListCourse" class="navbar-link d-flex rounded shadow align-items-center py-2 px-4">
+                            <span class="h4 mb-0"><i class="uil uil-users-alt"></i></span>
+                            <h6 class="mb-0 ms-2">مدیریت دوره ها </h6>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        } 
+        
+        
+      
+        <!--End Dashboard Teacher -->
+        <div class="widget mt-4 pt-2">
+            <h5 class="widget-title">دنبال کردن ما :</h5>
+            <ul class="list-unstyled social-icon mb-0 mt-4">
+                <li class="list-inline-item"><a href="javascript:void(0)" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook fea icon-sm fea-social"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a></li>
+                <li class="list-inline-item"><a href="http://instagram.com/Asan_Code" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram fea icon-sm fea-social"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a></li>
+                <li class="list-inline-item"><a href="javascript:void(0)" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin fea icon-sm fea-social"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+            </ul><!--end icon-->
+        </div>
+    </div>
+</div><!--end col-->

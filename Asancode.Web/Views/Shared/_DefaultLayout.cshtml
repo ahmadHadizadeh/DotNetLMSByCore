@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html class="js flexbox flexboxlegacy canvas canvastext webgl
+      no-touch geolocation postmessage websqldatabase indexeddb
+      hashchange history draganddrop websockets rgba hsla multiplebgs
+      backgroundsize borderimage borderradius boxshadow textshadow
+      opacity cssanimations csscolumns cssgradients cssreflections
+      csstransforms csstransforms3d csstransitions fontface generatedcontent
+      video audio localstorage sessionstorage webworkers no-applicationcache
+      svg inlinesvg smil svgclippaths" dir="rtl" lang="fa-IR">
+<head>
+    
+    <meta charset="utf-8"/>
+    <title>آموزش برنامه نویسی | آسان کد @ViewData["صفحه آموزش برنامه نویسی آسان کد خوش آمدید"] </title>
+    <meta name="viewport" content="width=device-width, initial-scale=0.7">
+    <meta name="description" content="Premium Bootstrap 5 Landing Page Template"/>
+    <meta name="keywords" content="Saas, Software, multi-uses, HTML, Clean, Modern"/>
+    <!-- Meta Ahmad-->
+    <meta name="googlebot" content="index,follow">
+    <meta name="robots" content="index,follow">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <!-- Meta Ahmad-->
+    <meta name="author" content="AhmadHadizadeh"/>
+    <meta name="email" content="myasancode@gmail.com"/>
+    <meta name="Version" content="v3.2.1"/>
+    <meta name="google-signin-client_id" content="731838488539-meo14oqkgcke8a0shbmehok585i1hila.apps.googleusercontent.com">
+    @RenderSection("MetaTag", false)
+    <!-- Style-->
+    <link rel="shortcut icon" type="image/x-icon" href="/UserPanel/favicon.ico">
+    <!-- Icons -->
+    @* <link href="https://cdn.rawgit.com/rastikerdar/sahel-font/v[X.Y.Z]/dist/font-face.css" rel="stylesheet" type="text/css" /> *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.rtl.min.css" integrity="sha384-gXt9imSW0VcJVHezoNQsP+TNrjYXoGcrqBZJpry9zJt8PCQjobwmhMGaDHTASo9N" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="/css/materialdesignicons.min.css" rel="stylesheet" type="text/css"/>
+    <link href="/unicons.iconscout.com/release/v3.0.6/css/line.css" rel="stylesheet">
+    <!-- Slider -->
+    <link href="/css/tiny-slider.css" type="text/css" rel="stylesheet"/>
+    <!-- Main Css -->
+    <link href="/css/style-dark.min.css" rel="stylesheet" type="text/css" id="theme-opt"/>
+    @* <link href="/css/style.min.css" rel="stylesheet" type="text/css" id="theme-opt"/> *@
+    <link href="/css/colors/default.css" rel="stylesheet" id="color-opt">
+    <link href="/css/aos.css" rel="stylesheet" type="text/css">
+    <link href="/css/asancode.css" rel="stylesheet" type="text/css">
+    <!-- Style-->
+    <script src="/js/jquery.min.js"></script>
+</head>
+
+<body>
+    <script src="/js/modernizr-custom.js"></script>
+    <!-- Loader -->
+    <div id="preloader">
+        <div id="status">
+            <div class="spinner">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Loader -->
+    <!-- Navbar STart -->
+    <header id="topnav" class="defaultscroll sticky nav-sticky ">
+        <div class="container">
+
+            <!-- Logo container-->
+            <div>
+                <a class="logo" href="/">
+                    <img src="/UserPanel/logoNoBack.png" height="62" alt="Logo">
+                </a>
+            </div>
+            <div class="buy-button">
+                <ul>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="list-inline-item mb-0">
+                            <a href="/UserPanel/" style="color: #9CE75B"> @User.Identity.Name ، خوش آمدی </a>
+                            <a href="/Logout"> خروج </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="list-inline-item mb-0 pe-1">
+                            <a href="/Login" class="btn btn-icon btn-soft-secondary" title="ورود"><i class="uil uil-signin icon"></i>ورود</a>
+                        </li>
+                        <li class="list-inline-item mb-0">
+                            <a href="/Register" class="btn btn-icon btn-soft-secondary" title="ثبت نام"><i class="uil uil-user icons"></i> ثبت </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!--end login button-->
+            <!-- Home Icon-->
+            <div class="back-to-home rounded d-none d-sm-block">
+                <a href="/" class="btn btn-icon btn-soft-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home icons">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                </a>
+            </div>
+            <!--End Home Icon-->
+            <!-- End Logo container-->
+            <div class="menu-extras">
+                <div class="menu-item">
+                    <a class="navbar-toggle" id="isToggle" onclick="toggleMenu()" >
+                        <div class="lines">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </a>
+                    <!-- End mobile menu toggle-->
+                </div>
+            </div>
+
+            <div id="navigation" >
+                <!--end navigation menu-->
+                <partial name="_Menu"/>
+            </div><!--end navigation-->
+        </div><!--end container-->
+    </header><!--end header-->
+    <!-- Navbar End -->
+    <!-- Hero End -->
+    <!-- Start Corrse -->
+    <!-- End Course -->
+    @RenderBody()
+    <!-- Footer Start -->
+    <partial name="_Footer" />
+    <!-- Footer End -->
+    <!-- Back to top -->
+    <a href="#" onclick="topFunction()" id="back-to-top" class="btn btn-icon btn-primary back-to-top"><i data-feather="arrow-up" class="icons"></i></a>
+    <!-- Back to top -->
+    <!-- Style switcher -->
+    <div id="style-switcher" class="bg-light border p-3 pt-2 pb-2 mb-2" onclick="toggleSwitcher()">
+        <div>
+            <h6 class="title text-center">رنگ خود را انتخاب کنید </h6>
+            <!-- color Setting-->
+            <!--Color Setting-->
+            <ul class="pattern">
+                <li class="list-inline-item">
+                    <a class="color1" href="javascript: void(0);" onclick="setColor('default')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color2" href="javascript: void(0);" onclick="setColor('green')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color3" href="javascript: void(0);" onclick="setColor('purple')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color4" href="javascript: void(0);" onclick="setColor('red')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color5" href="javascript: void(0);" onclick="setColor('skyblue')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color6" href="javascript: void(0);" onclick="setColor('skobleoff')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color7" href="javascript: void(0);" onclick="setColor('cyan')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color8" href="javascript: void(0);" onclick="setColor('slateblue')"></a>
+                </li>
+                <li class="list-inline-item">
+                    <a class="color9" href="javascript: void(0);" onclick="setColor('yellow')"></a>
+                </li>
+            </ul>
+            <h6 class="title text-center pt-3 mb-0 border-top">تنظیمات قالب </h6>
+            <ul class="text-center list-unstyled mb-0">
+                <li class="d-grid"><a href="javascript:void(0)" class=" " onclick="setTheme('style-rtl')"> </a></li>
+                <li class="d-grid"><a href="javascript:void(0)" class=" " onclick="setTheme('style')"> </a></li>
+                <li class="d-grid"><a href="javascript:void(0)" class=" " onclick="setTheme('style-dark-rtl')"> </a></li>
+                <li class="d-grid"><a href="javascript:void(0)" class=" " onclick="setTheme('style-dark')"> </a></li>
+                <li class="d-grid"><a href="javascript:void(0)" class="btn btn-sm btn-block btn-dark dark-version t-dark mt-2" onclick="setTheme('style-dark')">تیره </a></li>
+                <li class="d-grid"><a href="javascript:void(0)" class="btn btn-sm btn-block btn-dark light-version t-light mt-2" onclick="setTheme('style')">روشن </a></li>
+            </ul>
+            <!--Color Setting-->
+            <!-- color Setting-->
+        </div>
+        <div class="bottom">
+            <a href="javascript: void(0);" class="settings bg-white shadow d-block"><i class="mdi mdi-cog ms-1 mdi-24px position-absolute mdi-spin text-primary"></i></a>
+        </div>
+    </div>
+    <!-- end Style switcher -->
+    <!-- javascript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <!-- SLIDER -->
+    <!-- Icons -->
+    <script src="/js/feather.min.js"></script>
+    <!-- Switcher -->
+    <script src="/js/switcher.js"></script>
+<!-- Main Js -->  
+   <script src="/js/tiny-slider.js"></script>
+    <script src="/js/plugins.init.js"></script><!--Note: All init js like tiny slider, counter, countdown, maintenance, lightbox, gallery, swiper slider, aos animation etc.-->
+    <script src="/js/app.js"></script><!--Note: All important javascript like page loader, menu, sticky menu, menu-toggler, one page menu etc. -->
+    <script src="/js/aos.js"></script>
+    <script src="/js/contact.js"></script>
+    <!--Captcha -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!--Captcha -->
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    @RenderSection("Scripts", false)
+</body>
+
+</html>

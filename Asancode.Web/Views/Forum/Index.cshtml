@@ -1,0 +1,111 @@
+﻿@model IEnumerable<DataLayer.Entities.Forum.Question>
+@using Core.Convertors
+@inject Core.Services.Interfaces.IOrderService _orderService;
+@inject Core.Services.Interfaces.ICourseGroupService _courseService;
+
+@{
+    ViewData["Title"] = "Index";
+    var course = _courseService.GetCourseByCourseId((int)ViewBag.CourseId);
+}
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h3> </h3>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account">انجمن</i></li>
+
+                    </ul>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="/Forum?courseId=@ViewBag.courseId">لیست سوالات انجمن</a></li>
+                                <li class="breadcrumb-item"><a href="#">پرسش و پاسخ</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="text-center subcribe-form mb-2">
+                    <form asp-action="Index" method="get" style="width: 800px;">
+                        <input type="text" name="filter" class="rounded-pill shadow" placeholder="جستجوی انجمن ها...">
+                        <button type="submit" class="btn btn-pills btn-primary">جستجوی پرسش ها</button>
+                        <input type="hidden" name="courseId" value="@ViewBag.courseId" />
+                    </form><!--end form-->
+                    @if (ViewBag.courseId != null)
+                    {
+                        if (User.Identity.IsAuthenticated)
+                        {
+                            if (course.CoursePrice == 0 || _orderService.IsBuyCourse(User.Identity.Name, (int)ViewBag.CourseId))
+                            {
+                                <a asp-action="CreateQuestion" asp-route-id="@ViewBag.courseId" class="btn btn-pills btn-soft-info mt-4 me-2 ">پرسیدن سوال </a>
+                            }
+                            else
+                            {
+                                <div class="alert alert-danger text-center">
+                                    شما این دوره را خریداری نکردید
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger text-center">
+                                برای پرسیدن سوال باید وارد سایت شوید
+                            </div>
+                        }
+                    }
+
+                </div>
+                <div class="table-responsive bg-white shadow rounded mt-4">
+                    <table class="table mb-0 table-center ">
+                        <thead class="bg-light">
+                            <tr>
+                                <th scope="col" class="border-bottom" style="min-width: 300px;">عنوان پرسش های انجمن</th>
+                                <th scope="col" class="border-bottom text-center" style="max-width: 150px;"> نام کاربر</th>
+                                <th scope="col" class="border-bottom text-center" style="width: 100px;">آموزش مورد نظر</th>
+                                <th scope="col" class="border-bottom text-center" style="width: 100px;">تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex">
+                                            <i class="uil uil-comment text-muted h5"></i>
+                                            <div class="flex-1 content ms-3">
+                                                <a class="forum-title text-primary fw-bold" href="/Forum/ShowQuestion/@item.QuestionId">@item.Title</a>
+
+                                                <p class="text-muted small mb-0 mt-2">ادامه...</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center small">@item.User.UserName</td>
+                                    <td class="text-center small ">@item.Courses.CourseTitle </td>
+                                    <td class="text-center small">@item.CreateDate.ToShamci() </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div><!--end container-->
+</section>

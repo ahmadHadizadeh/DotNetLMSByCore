@@ -1,0 +1,284 @@
+﻿/*Social And Short link css aban 1400*/
+
+.box-Social-Linnk {
+    padding: 20px 34px;
+    margin-bottom: 20px;
+}
+
+.box-Social-shadow {
+    box-shadow: 0 5px 21px 0 #e8e8e8;
+    border-radius: 30px;
+}
+
+.box-Social-Linnk {
+    padding: 20px 34px;
+    margin-bottom: 20px;
+}
+
+.box-Social-nopad {
+    padding: 0;
+}
+
+.Social-Linnk .box-Social-nopad li {
+    display: inline-block;
+}
+
+a.blog-sociallink {
+    background-color: transparent;
+    text-decoration: none !important;
+}
+
+img.blog-sociallink {
+    border-style: none;
+    max-width: 100%;
+}
+
+.Social-Linnk .box-Social-nopad li {
+    display: inline-block;
+}
+
+ul.list-unstyled li a.buy {
+    color: #46b281 !important;
+    text-shadow: 2px 2px 3px #156767 !important;
+    font-weight: bolder;
+    font-size: 60px
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.asancode-shortlink input {
+    background: #f3f3f3;
+    max-width: 280px;
+    width: 100%;
+    border: none;
+    outline: 0;
+    padding: 10px 10px 10px 38px;
+    color: #aeaeae;
+    font-size: 13px;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+.fa-chain::before, .fa-link::before {
+    content: "\f0c1";
+}
+
+.asancode-shortlink .zmdi {
+    position: relative;
+    top: 5px;
+    left: 10px;
+    font-size: 22px;
+    color: #aeaeae;
+}
+
+.box-Social-Linnk .autocopy {
+    display: inline-flex;
+}
+
+    .box-Social-Linnk .autocopy button {
+        background: #d0cdcd;
+        border: 0;
+        border-radius: 26px;
+        padding: 0px 10px;
+        color: #FFF;
+        font-weight: 200;
+        cursor: pointer;
+        box-shadow: -5px 4px 5px -2px #3e3e3e;
+        margin: 10px 0 0 10px;
+    }
+
+        .box-Social-Linnk .autocopy button:hover {
+            background: #b2b0b0;
+            border: 0;
+            border-radius: 26px;
+            padding: 0px 10px;
+            color: #FFF;
+            font-weight: 200;
+            cursor: pointer;
+            box-shadow: -5px 4px 5px -2px #3e3e3e;
+            margin: 10px 0 0 10px;
+        }
+
+    .box-Social-Linnk .autocopy p#matn {
+        width: 230px;
+        background: #f8f8f8;
+        padding: 4px 12px 4px 5px;
+        margin: 10px 4px 6px 3px;
+        text-align: left;
+        border-radius: 15px;
+        color: #656565;
+        cursor: default;
+        box-shadow: 0px 4px 5px -2px #3e3e3e;
+        z-index: 5;
+    }
+/*Articel left BloG*/
+.Article-leftshowBlog {
+    border-radius: 8px;
+    padding: 8px 0px;
+    text-align: right;
+    font-size: 12px;
+    clear: both;
+}
+
+.Count-leftshowBlog {
+    background-color: #2e2f5e;
+    color: #fff;
+    border-radius: 100px;
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+    text-align: center;
+    float: right;
+    margin-left: 10px;
+}
+
+.Article-leftshowBlog a {
+    color: #1b2238;
+    font-weight: 600;
+    overflow-wrap: break-word;
+}
+
+.Article-leftshowBlog:hover {
+    background-color: #d7d6d6;
+    color: #0a142f;
+}
+
+.Article-leftshowBlog-ShowMore {
+    text-align: center;
+    clear: both;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: 400;
+}
+/*End Articel left BloG*/
+/*Social And Short link css aban 1400*/
+/*Btn Css CourseDetails */
+.btnQuestionAnswer a.ques {
+    background-color: #0078d0;
+    border: 0;
+    border-radius: 56px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font-family: "B Yekan";
+    font-size: 15px;
+    font-weight: 300;
+    outline: 0;
+    padding: 10px 60px 20px 60px;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    transition: all .3s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    margin-right: 65px;
+    margin-bottom: 20px;
+}
+
+    .btnQuestionAnswer a.ques:before {
+        background-color: initial;
+        background-image: linear-gradient(#fff 0, rgba(255, 255, 255, 0) 100%);
+        border-radius: 125px;
+        content: "";
+        height: 50%;
+        left: 4%;
+        opacity: .5;
+        position: absolute;
+        top: 0;
+        transition: all .3s;
+        width: 100%;
+    }
+
+    .btnQuestionAnswer a.ques:hover {
+        box-shadow: rgba(255, 255, 255, .2) 0 3px 15px inset, rgba(0, 0, 0, .1) 0 3px 5px, rgba(0, 0, 0, .1) 0 10px 13px;
+        transform: scale(1.05);
+    }
+/*End Btn Css CourseDetails */
+/*Start Course Episode*/
+/* .col .component-wrapper .accordion .accordion-collapse .accordion-body */
+
+section .accordion-collapse .accordion-body .conterNum-Course-Course {
+    border: 2px solid #d7e0e9;
+    width: 30px;
+    height: 30px;
+    line-height: 28px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #556167;
+    position: absolute;
+    right: -15px;
+    top: 11px;
+    background-color: #fff;
+    border-radius: 100%;
+    -moz-border-radius: 100%;
+    -webkit-border-radius: 100%;
+}
+
+section .accordion-collapse .accordion-body .video-item-Course {
+    border: 1px dashed #d7e0e9;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    position: relative;
+}
+
+section .component-wrapper .accordion .view-Live-courseasancode ul {
+    padding: 10px 17px 10px 0;
+    width: auto;
+    display: table;
+    float: right;
+}
+
+section .accordion ul.view-Live-courseasancode {
+    margin: 0 auto;
+    padding-top: 10px;
+}
+    /* .col .component-wrapper .accordion .accordion-collapse .accordion-body */
+    section .accordion ul.view-Live-courseasancode li {
+        list-style: none;
+    }
+
+        section .accordion ul.view-Live-courseasancode li a.view-Live-courseasancode {
+            color: #f4c433;
+        }
+
+section .accordion .video-item-Course ul::after {
+    display: block;
+    clear: both;
+    content: '';
+    visibility: hidden;
+    height: 0;
+    line-height: 0;
+    /* color: e7e42ef7; */
+}
+
+section .accordion .course-time-left-course {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+    float: left;
+    margin: 0 auto;
+    text-align: center;
+    border-radius: 0;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    margin-top: 4px;
+}
+
+section .accordion .course-time-state {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-right: 40px;
+    text-align: center
+}
+
+/*End Course Episode*/
+/*Corect Answer*/
+
+/*Corect Answer*/

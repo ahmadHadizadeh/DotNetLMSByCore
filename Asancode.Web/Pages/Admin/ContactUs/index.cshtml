@@ -1,0 +1,86 @@
+﻿@page
+@model Asancode.Web.Pages.Admin.ContactUs.indexModel
+@{
+    ViewData["Title"] = " لیست تماس با ما";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">مدیریت  تماس با ما</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="col-lg-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            تماس با ما
+        </div>
+        <!-- /.panel-heading -->
+        <div class="panel-body">
+            <div class="table table-responsive">
+                <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                    <div class="row">
+                        <form style="padding: 6px">
+                            <div class="col-md-5 col-sm-5">
+                                <input name="filterUserName" class="form-control" type="text" placeholder="لطفا نام کامل مورد نظر را وارد کنید" />
+                            </div>
+                            <div class="col-md-5 col-sm-5">
+                                <input name="filterEmail" type="text" class="form-control" placeholder="لطفا ایمیل مورد نظر را وارد کنید" />
+                            </div>
+                            <div class="btn-group col-md-2 col-sm-2">
+                                <button class="btn btn-success"> جستجو</button>
+                                <a href="/Admin/ContactUs" class="btn btn-warning"> Clear Filter</a>
+                            </div>
+                        </form>
+                        <div>
+                            <table class="table table-bordered table-striped table-hover ">
+                                <thead>
+                                    <tr>
+                                        <th> نام ونام خانوادگی</th>
+                                        <th> ایمیل</th>
+                                        <th> شماره تماس</th>
+                                        <th>متن پیام</th>
+                                        <th>عمیلات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.ContactUsViewModel.Contact)
+                                    {
+                                        <tr>
+                                            <td>@item.FullName</td>
+                                            <td>@item.Email</td>
+                                            <td>@item.PhoneNumber</td>
+                                            <td>
+                                                <p>@item.Description</p>
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-sm btn-danger" href="/Admin/ContactUs/DeleteContact/@item.ContactId"> حذ ف</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 text-left ">
+                                <div class="dataTables_paginate">
+                                    <ul class="pagination">
+                                        @for (int i = 1; i <= Model.ContactUsViewModel.PageCount; i++)
+                                        {
+                                            <li class="paginate_button @((i == Model.ContactUsViewModel.CurrentPage) ? "active" : "")" aria-controls="dataTables-example" tabindex="0">
+                                                <a href="/Admin/ContactUs?PageId=@i">@i</a>
+                                            </li>
+
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.table-responsive -->
+            </div>
+            <!-- /.panel-body -->
+        </div>
+        <!-- /.panel -->
+    </div>
+</div>

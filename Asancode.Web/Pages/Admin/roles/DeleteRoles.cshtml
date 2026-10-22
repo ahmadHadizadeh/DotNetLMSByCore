@@ -1,0 +1,14 @@
+﻿@page "{id}"
+@model Asancode.Web.Pages.Admin.roles.DeleteRolesModel
+@{
+    ViewData["Title"] = "DeleteRoles";
+}
+<div class="row alert alert-info ">
+    <form method="post">
+        <input type="hidden" asp-for="Roles.RoleId" />
+        <input type="hidden" asp-for="Roles.RolesTitles" />
+        <h2 class="text-center text-danger"> آیا از حذف @Model.Roles.RolesTitles مطمعین هستید؟</h2>
+        <input type="submit" class="btn btn-outline btn-danger" value="حذف" />
+        <a class="btn btn-outline btn-success" asp-page="Index">انصراف</a>
+    </form>
+</div>

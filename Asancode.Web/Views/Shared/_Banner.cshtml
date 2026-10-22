@@ -1,0 +1,18 @@
+﻿@model IEnumerable<Core.DTO.Banner.BannerInfoViewModel>
+
+@if (Model != null)
+{
+    @foreach (var item in Model)
+    {
+        <a href="/Course/">
+            <section class="section  bg-light">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <img src="/Banner/MainImage/@item.ImageName" style="width: 1000px; height: 240px;"/>
+                    </div><!--end row-->
+                </div><!--end container-->
+            </section>
+        </a>
+    }
+
+}

@@ -1,0 +1,107 @@
+﻿@page "{id}"
+@using Core.Convertors
+@model Asancode.Web.Pages.Admin.Blog.EditBlogModel
+@{
+    ViewData["Title"] = "ویرایش مقاله ";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-info "> ویرایش مقاله</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container-fluid">
+    <div class="panel-body">
+        <div class="row ">
+            @*<input type="hidden" asp-for="Blog.BlogImageName" />*@
+            <form method="post" enctype="multipart/form-data">
+                <input asp-for="Blog.BlogImageName" type="hidden" />
+                <input asp-for="Blog.BlogId" type="hidden" />
+                <input asp-for="Blog.ShortKey" type="hidden" />
+                <div class="col-md-7">
+                    <div class="form-group ">
+                        <label>عنوان مقاله </label>
+                        <input class="form-control " type="text" asp-for="Blog.Title" />
+                        <span asp-validation-for="Blog.Title"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>نویسنده مقاله </label>
+                        <input class="form-control" asp-for="Blog.Writer" />
+                        <span asp-validation-for="Blog.Writer"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>چکیده مقاله </label>
+                        <textarea class="form-control" asp-for="Blog.AbstractText" rows="5"></textarea>
+                        <span asp-validation-for="Blog.AbstractText"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>متن مقاله </label>
+                        <textarea class="form-control" asp-for="Blog.TextBlog" rows="9"></textarea>
+                        <span asp-validation-for="Blog.TextBlog"></span>
+                    </div>
+                    <div class=" form-group">
+                        <label> تاریخ شروع:</label>
+                        <input class="form-control" id="StartData" name="startDt" value="@(Model.Blog != null && Model.Blog != null && (Model.Blog.Date != null) ? Model.Blog.Date.ToShamci() : "")"/>
+                    </div>
+                    <div class="form-group">
+                        <label>کلمات کلیدی </label>
+                        <input class="form-control" type="text" asp-for="Blog.Tags" />
+                        <span asp-validation-for="Blog.Tags"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                تصویر مقاله
+                            </div>
+                            <div class="panel-body">
+                                <img id="Myimagesrc" class="thumbnail" src="/Blog/MainImage/@Model.Blog.BlogImageName" />
+                                <input type="file" id="uplodImg" name="uplodImg" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-md-12 col-sm-2 ">
+                        <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts
+    {
+    <script>
+
+        //OnTime Upload Img
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $('#Myimagesrc').attr('src', e.target.result);
+                }
+
+                reader.readAsDataURL(input.files[0]); // convert to base64 string
+            }
+        }
+
+        $("#uplodImg").change(function () {
+            readURL(this);
+        });</script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/30.0.0/classic/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('Blog_TextBlog', {
+            customConfig: '/js/Config.js'
+        });</script>
+    <script src="/DateTimPickr/js/jquery-1.10.1.min.js"></script>
+    <script src="/DateTimPickr/js/persianDatepicker.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $("#StartData").persianDatepicker();
+
+        });
+    </script>
+}

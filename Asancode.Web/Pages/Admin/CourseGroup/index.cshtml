@@ -1,0 +1,74 @@
+﻿@page
+@model Asancode.Web.Pages.Admin.CourseGrooup.indexModel
+@{
+    ViewData["Title"] = "index";
+}
+<div class="container">
+    <div class="row ">
+        <div class="col-lg-12">
+            <h1 class="page-header alert alert-warning  text-center">مدیریت گروه ها</h1>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+</div>
+<div class="container ">
+    <div class="row ">
+        <div class="col-lg-12">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    مدیریت گروه ها
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    <div class="table table-responsive">
+                        <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                            <div class="row">
+                                <div class="col-md-12 col-sm-9 justify-content-center" style="padding: 15px 15px 10px 0;">
+                                    <a asp-page="CreateNewCourseGroup" class="btn  btn-success">افزودن گروه جدید</a>
+                                </div>
+                                <table class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>عنوان گروه اصلی ها </th>
+                                            <th>عنوان  زیر گروه ها </th>
+                                            <th>عمیلات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var group in Model.CourseGroup.Where(g => g.ParentId == null))
+                                        {
+                                            <tr>
+                                                <td>@group.GroupTitle</td>
+                                                <td>
+                                                    @if (group.CourseGroups.Any())
+                                                    {
+                                                        <ul>
+                                                            @foreach (var sub in group.CourseGroups)
+                                                            {
+                                                                <li>
+                                                                    @sub.GroupTitle
+                                                                    <a class="btn btn-xs btn-warning btn-outline" href="/Admin/CourseGroup/EditCourse/@sub.GroupId"> ویرایش زیر گروه جدید</a>
+                                                                </li>
+                                                            }
+                                                        </ul>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <a class="btn btn-sm btn-primary" href="/Admin/CourseGroup/CreateNewCourseGroup/@group.GroupId"> ایجاد زیر گروه جدید</a>
+                                                    <a class="btn btn-sm btn-warning" href="/Admin/CourseGroup/EditCourse/@group.GroupId">و یرا یش</a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- /.table-responsive -->
+                    </div>
+                    <!-- /.panel-body -->
+                </div>
+                <!-- /.panel -->
+            </div>
+        </div>
+    </div>
+</div>

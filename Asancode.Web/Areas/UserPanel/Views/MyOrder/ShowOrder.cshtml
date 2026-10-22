@@ -1,0 +1,195 @@
+﻿@using Core.Services.Interfaces
+@model DataLayer.Entities.Order.Order
+@inject IUserService _userService
+@{
+    ViewData["Title"] = "نمایش فاکتور";
+    int SumOrder = Model.OrderSum;
+    string showAlert = ViewBag.AlertName.ToString();
+    int row = 1;
+}
+<partial name="_HeaderUserpanel" />
+<section class="mt-5 pt-4">
+    <div class="container mt-lg-3">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="tns-outer" id="tns1-ow">
+                    <div class="tns-liveregion tns-visually-hidden" aria-live="polite" aria-atomic="true">slide <span class="current">1 to 4</span> of 8</div>
+                    <div id="tns1-mw" class="tns-ovh">
+                        <div class="tns-inner" id="tns1-iw">
+                            <div class="tiny-four-item  tns-slider tns-carousel tns-subpixel tns-calc tns-horizontal" id="tns1" style="transform: translate3d(0%, 0px, 0px);">
+                                @foreach (var item in ViewBag.CourseSlider)
+                                {
+                                    <div class="tiny-slide  tns-item tns-slide-active" id="tns1-item1">
+                                        <a class="customer-testi" href="/CourseDetails/@item.CourseId/@item.Title.Trim().Replace(" ", "-")">
+                                            <img src="/Course/Thumnail/@item.ImageCourse" class="img-fluid rounded shadow" alt="عکس آموزشهای محبوب">
+                                        </a>
+                                        <div class="author">
+                                            <small class="text-muted text-center d-block">@item.Title</small>
+                                        </div>
+                                    </div>
+
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded shadow p-4 mt-1">
+                        <div class="section-title text-center mb-4 pb-2">
+                            <h4 class="title text-muted mb-4 mx-auto mb-0">" روی خودتان سرمایه‌گذاری کنید. آموزش موتور ایجاد ثروت شماست." </h4>
+                        </div>
+                        @if (Model.OrderDetail.Any())
+                        {
+                            <div class="table-responsive bg-white shadow-md rounded-md mb-2" style="direction: rtl">
+
+                                <table class="table mb-0 table-center">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="border-bottom">ردیف</th>
+                                            <th scope="col" class="border-bottom" style="min-width: 250px;">دوره آموزشی </th>
+                                            <th scope="col" class="border-bottom" style="width: 150px;">تعداد </th>
+                                            <th scope="col" class="border-bottom" style="width: 100px;">قیمت </th>
+                                            <th scope="col" class="border-bottom" style="width: 100px;"> جمع </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.OrderDetail)
+                                        {
+                                            <tr>
+                                                <td>@row</td>
+                                                <td>
+                                                    <a class="text-right text-info " href="/CourseDetails/@item.CourseId/@item.Courses.CourseTitle" target="_blank"> @item.Courses.CourseTitle</a>
+                                                </td>
+                                                <td>@item.Count</td>
+                                                <td>@item.Price.ToString("#,0")</td>
+                                                <td>@((item.Count * item.Price).ToString("#,0")) </td>
+                                               
+                                            </tr>
+                                            row += 1;
+                                        }
+                                        @if (!Model.IsFinally)
+                                        {
+                                            <tr>
+                                                <td class="text-left" colspan="3">کد تخفیف</td>
+                                                <td>
+                                                    <form action="/UserPanel/MyOrder/Discount" method="post">
+                                                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                                                        <input type="text" name="code" id="mytext" class="form-control mb-2" />
+                                                        <input type="submit"  class="btn btn-primary btn-block " value="اعمال تخفیف" />
+                                                    </form>
+                                                    @if (showAlert != "")
+                                                    {
+                                                        @switch (showAlert)
+                                                        {
+                                                            case "Success":
+                                                                {
+                                                                    <p class="alert alert-success text-white text-center">کدتخفیف با موفقیت اعمال شد</p> break;
+
+                                                                }
+                                                            case "NotStart":
+                                                                {
+                                                                    <p class="alert alert-danger text-muted text-center">این کدتخفیف هنوز شروع نشده است</p> break;
+                                                                }
+                                                            case "ExpierDate":
+                                                                {
+                                                                    <p class="alert alert-danger text-white text-center"> این کدتخفیف منقضی شده است</p> break;
+                                                                }
+                                                            case "NotFound":
+                                                                {
+
+                                                                    <p class="alert alert-warning text-white">کدتخفیف معتبر نیست</p> break;
+                                                                }
+                                                            case "Finished":
+                                                                {
+                                                                    <p class="text-white text-center alert alert-warning">کدتخفیف به اتمام رسیده است</p> break;
+                                                                }
+                                                            case "UserUsed":
+                                                                {
+                                                                    <p class="alert alert-info text-white text-center">این کدتخفیف قبلا توسط شما استفاده شده است</p>break;
+                                                                }
+                                                        }
+
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        <tr>
+                                            <td class="text-left" colspan="4">جمع کل</td>
+                                            <td class="text-left">
+                                                @SumOrder.ToString("#,0")
+                                            </td>
+                                        </tr>
+                                        @if (!Model.IsFinally)
+                                        {
+                                            <tr>
+
+
+                                                @if (_userService.BallenceWallet(User.Identity.Name) >= SumOrder)
+                                                {
+                                                    if (SumOrder == 0)
+                                                    {
+                                                        <td colspan="3">
+                                                            <a class="btn btn-success btn-block" href="/UserPanel/MyOrder/ApplyOrder/@Model.OrderId"> شرکت دراین دوره</a>
+                                                        </td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td colspan="3">
+                                                            <a class="btn btn-success btn-block" href="/UserPanel/MyOrder/ApplyOrder/@Model.OrderId"> تائید فاکتور</a>
+                                                        </td>
+                                                    }
+
+                                                }
+                                                else
+                                                {
+                                                    <td colspan="3">
+                                                        <p class="alert alert-warning text-white">
+                                                            کاربر گرامی: موجودی حساب شما کافی نمی باشدلطفااز طریق لینک زیر حساب خود را شارژ نمایید
+                                                        </p>
+                                                        <a class="btn btn-primary text-white mt-2 text-center" href="/UserPanel/Wallet/" style="letter-spacing: 1px;">شارژ حساب </a>
+                                                    </td>
+                                                    row += 1;
+                                                }
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+                                </table><!--end table-->
+
+                            </div>
+                        }
+
+                        @if (ViewBag.Apply == true)
+                        {
+                            <div class="text-center mt-4">
+                                <div class="icon d-flex align-items-center justify-content-center bg-soft-success rounded-circle mx-auto" style="height: 90px; width:90px;">
+                                    <i class="uil uil-thumbs-up align-middle h1 mb-0"></i>
+                                </div>
+                                <h4 class="my-4 fw-bold text-success ">" خرید با موفقیت انجام شد "</h4>
+                                <h5 class="my-4 text-muted">ممنون از خرید و اعتماد شما به گروه آموزشی آسان کد</h5>
+                                <p class="bg-success text-white para-desc mx-auto "> این آموزش به لیست دوره های شما افزوده شده است <i class="uil uil-book"></i>  .</p>
+                                <a href="/" class="btn btn-soft-primary mt-3">برو صفحه اصلی </a>
+                            </div>
+
+                        }
+                        <div class="mt-4 pt-2 text-center">
+                            <a href="/UserPanel/Wallet/" class="text-primary h6">شارژ کیف پول <i class="uil uil-wallet align-middle"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div><!--end container-->
+</section>
+
+@section Scripts
+{
+    <script type="text/javascript" src="/js/CounterProduct.js"></script>
+    <script>
+
+    </script>
+}
+
+
+
+

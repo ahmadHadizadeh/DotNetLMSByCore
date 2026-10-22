@@ -1,0 +1,31 @@
+﻿@page "{id}"
+@model Asancode.Web.Pages.Admin.Blog.DeleteBlogModel
+@{
+    ViewData["Title"] = "حذف مقالات";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">حذف مقالات آموزشی</h1>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-10 col-sm-12">
+            <form method="post">
+                <input type="hidden" name="BlogId" value="@ViewData["BlogId"].ToString()" />
+                <ul class="list-group">
+                    <li class="list-group-item font-weight-bold  ">عنوان مقاله:@Model.DeleteBlogViewModel.BlogTitle</li>
+                    <li class="list-group-item d-block">
+                        <img src="/Blog/Thumnail/@Model.DeleteBlogViewModel.ImageName" class="thumbnail" style="width: 190px" />
+                    </li>
+                    <li class="list-group-item">نویسنده:@Model.DeleteBlogViewModel.BlogWriter</li>
+                </ul>
+                <div class="row">
+                    <div class="col-md-8 col-sm-10">
+                        <input type="submit" class="btn btn-danger btn-block" value="حذف" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

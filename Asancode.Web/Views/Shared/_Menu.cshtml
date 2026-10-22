@@ -1,0 +1,45 @@
+﻿
+<ul class="navigation-menu">
+    <li class="active"><a href="/" class="sub-menu-item active">صفحه اصلی </a></li>
+    <li class="has-submenu parent-parent-menu-z mt-1">
+        @await Component.InvokeAsync("CourseGroupComponent")
+    </li>
+
+    <li class="has-submenu parent-parent-menu-z ">
+        <a href="javascript:void(0)"> آکادمی آسان کد</a><span class="menu-arrow"></span>
+        <ul class="submenu">
+            <li class="has-submenu parent-menu-item active">
+                <a href="javascript:void(0)"> بخش اطلاعات آسان کد </a><span class="submenu-arrow"></span>
+                <ul class="submenu">
+                    <li><a href="/AboutMe" class="sub-menu-item active"> درباره ما </a></li>
+                    <li><a href="/Service" class="sub-menu-item ">خدمات </a></li>
+                    <li><a href="/Team" class="sub-menu-item"> تیم ما </a></li>
+                </ul>
+            </li>
+            <li class="has-submenu parent-menu-item">
+                <a href="javascript:void(0)"> مرکز پشتیبانی </a><span class="submenu-arrow"></span>
+                <ul class="submenu">
+                    <li><a class="sub-menu-item" href="/Faqs">سوالهای متداول </a></li>
+                    <li><a class="sub-menu-item" href="/Terms">قوانین سایت </a></li>
+                </ul>
+            </li>
+            <li class="has-submenu parent-menu-item">
+                <a href="javascript:void(0)"> مشارکت در آسان کد </a><span class="submenu-arrow"></span>
+                <ul class="submenu">
+                    <li><a class="sub-menu-item" href="/Cooperation">همکاری با آسان کد </a></li>
+                    <li><a class="sub-menu-item" href="/Education">تدریس در آسان کد </a></li>
+                    <li><a class="sub-menu-item" href="/Bloger"> مقاله نویسی </a></li>
+                    <li><a class="sub-menu-item" href="/Office"> همکاری در بخش اداری </a></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li class="has-submenu parent-parent-menu-item">
+        <a href="javascript:void(0)"> اطلاعات تماس </a><span class="menu-arrow"></span>
+        <ul class="submenu">
+            <li><a class="sub-menu-item" href="/Contact"> تماس با ما </a></li>
+            <li><a class="sub-menu-item" href="/HelpCenter">پشتیبانی تماسی </a></li>
+        </ul>
+    </li>
+</ul>
+

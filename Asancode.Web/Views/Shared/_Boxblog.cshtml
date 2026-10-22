@@ -1,0 +1,32 @@
+﻿@using Core.Convertors
+@using Core.Services.Interfaces
+@using DataLayer.Entities.Bloger
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@model Core.DTO.ShowBlogViewModel
+
+<div class="col-lg-4 col-md-6 mt-4 pt-2">
+    <div class="card blog rounded border-0 shadow overflow-hidden">
+        <div class="position-relative">
+            <img src="/Blog/Thumnail/@Model.BlogImage" class="card-img-top" alt="@Model.BlogTitle">
+            <div class="overlay rounded-top bg-dark"></div>
+        </div>
+        <div class="card-body content">
+            <h6>
+                <a href="/ShowBlog/@Model.BlogId/@Model.BlogTitle.Trim().Replace(" ", "-")" class="card-title title text-dark">@Model.BlogTitle</a>
+            </h6>
+            <div class="post-meta d-flex justify-content-between mt-3">
+                <ul class="list-unstyled mb-0">
+                    @*<li class="list-inline-item me-2 mb-0"><a href="#" class="text-muted like"><i class="uil uil-heart me-1"></i>33</a></li>
+                    <li class="list-inline-item"><a href="#" class="text-muted comments"><i class="uil uil-comment me-1"></i>08</a></li>*@
+                </ul>
+                <a href="/ShowBlog/@Model.BlogId/@Model.BlogTitle.Trim().Replace(" ", "-")" class="text-muted readmore">ادامه مطلب <i class="uil uil-angle-left-b align-middle"></i></a>
+            </div>
+        </div>
+        <div class="author">
+            <small class="text-light user d-block"><i class="uil uil-user"></i>@Model.BlogWriter</small>
+            <small class="text-light date"><i class="uil uil-calendar-alt"></i>@Model.BlogDateTime.ToShamci()</small>
+        </div>
+    </div>
+</div>
+<!--end col-->

@@ -1,0 +1,134 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using DataLayer.Course
+@model DataLayer.Entities.Forum.Question
+@inject Core.Services.Interfaces.ICourseGroupService _courseService;
+
+@{
+    var course = _courseService.GetCourseByCourseId((int)ViewBag.CourseId);
+    ViewData["Title"] = "ایجاد سوال جدید";
+}
+
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h3> </h3>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account">ایجاد سوال جدید</i></li>
+                    </ul>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="/Forum?courseId=@ViewBag.courseId"> سوالات انجمن</a></li>
+                                <li class="breadcrumb-item"><a href="#">سوال جدید</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-6 ">
+                <div class="rounded shadow" style="border: 2px solid #aaccff; margin-bottom: 30px;">
+
+                    <div style="margin: 16px 34px 0 0; color: #737373; letter-spacing: 2px; ">
+                        <h4 class="">سوال خودرا بپرسید؟</h4>
+                    </div>
+                    <ul class="list-unstyled">
+
+                        <li class="list-unstyled social-icon mb-0 mt-4"> <i class="glyphicon glyphicon-alert"></i> کاربر گرامی لطفا قبل از پرسیدن سوال جستجو بفرمایید تا سوال شما تکراری نباشد </li>
+                        <li class="list-unstyled social-icon mb-0 mt-4"> سعی کنید سوال خود را واضح و شفاف بپرسید تا کاربران بتوانندبه راحتی به آن پاسخ گو باشند</li>
+                        <li class="list-unstyled social-icon mb-0 mt-4"> به همراه سوال خود عکس کد مورد نظر یا خود کد یا آدرس کد را هم میتوانید لینک کنید</li>
+                    </ul>
+
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between">
+                            <form asp-action="CreateQuestion">
+                                <input type="hidden" asp-for="CourseId" />
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <div class="mb-3">
+                                    <label class="form-label">عنوان </label>
+                                    <div class="form-icon position-relative">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-book fea icon-sm icons"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                        <input type="text" asp-for="Title" class="form-control ps-5" placeholder="عنوان سوال  :">
+                                        <span asp-validation-for="Title" class="text-danger"></span>
+                                    </div>
+                                </div>
+                              
+                                <label class="d-block mt-3 p-2">لطفا شرح سوال خود را در باکس زیر بنویسید:</label>
+
+                                <textarea name="Body"></textarea>
+                                <span asp-validation-for="Body" class="text-danger"></span>
+
+                                <div class="form-group">
+                                    <a role="button" class="btn btn-soft-muted mt-2 me-2" href="/">بازگشت</a>
+                                    <button type="submit" class="btn btn-soft-info mt-2 me-2">ثبت سوال  </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div><!--end col-->
+
+            <div class="col-lg-4 col-md-6 col-12 mt-4 mt-sm-0 pt-2 pt-sm-0">
+                <div class="card border-0 sidebar sticky-bar rounded shadow">
+                    <div class="card-body">
+                        <!-- پست های اخیر -->
+                        <div class="widget mb-4 pb-2 pr-5">
+                            <a href="https://localhost:44384/Course/"> دوره‌های پیشنهادی کاربران آسان کد</a>
+                            @foreach (var item in ViewBag.listCourse)
+                            {
+                                <div class="mt-4 d-block">
+                                    <div class="clearfix post-recent">
+                                        <div class="float-start d-block">
+                                            <a class="d-block text-info " href="/CourseDetails/@item.CourseId/@item.Title">@item.Title </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <!-- پست های اخیر -->
+                        <!-- SOCIAL -->
+                        <div class="widget">
+                            <h5 class="widget-title">دنبال کردن ما</h5>
+                            <ul class="list-unstyled social-icon mb-0 mt-4">
+                                <li class="list-inline-item"><a href="http://instagram.com/Asan_Code" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram fea icon-sm fea-social"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a></li>
+                                <li class="list-inline-item"><a href="https://www.facebook.com/" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook fea icon-sm fea-social"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a></li>
+                                <li class="list-inline-item"><a href="https://www.linkedin.com/in/ahmad-hadizadeh-374683132/" class="rounded" title="linkedin"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin fea icon-sm fea-social"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+                                <li class="list-inline-item"><a href="mailto:myAsancode@gmail.com" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail fea icon-sm fea-social"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a></li>
+                            </ul><!--end icon-->
+                        </div>
+                        <!-- SOCIAL -->
+                    </div>
+                </div>
+            </div>
+        </div><!--end row-->
+    </div><!--end container-->
+</section>
+
+
+@section Scripts
+{
+    <script src="https://cdn.ckeditor.com/4.15.1/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('Body', {
+            customConfig: '/js/Config.js'
+        });
+    </script>
+}

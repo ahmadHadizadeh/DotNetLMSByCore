@@ -1,0 +1,109 @@
+﻿@using Core.Convertors
+@model IEnumerable<DataLayer.Entities.Order.Order>
+@{ ViewData["Title"] = "لیست فاکتور ها";
+    int row = 1;
+}
+<partial name="_HeaderUserpanel" />
+<section class="mt-5 pt-4">
+    <div class="container">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="tns-outer" id="tns1-ow">
+                    <div class="tns-liveregion tns-visually-hidden" aria-live="polite" aria-atomic="true">slide <span class="current">1 to 4</span> of 8</div>
+                    <div id="tns1-mw" class="tns-ovh">
+                        <div class="tns-inner" id="tns1-iw">
+                            <div class="tiny-four-item  tns-slider tns-carousel tns-subpixel tns-calc tns-horizontal" id="tns1" style="transform: translate3d(0%, 0px, 0px);">
+
+                                @foreach (var item in ViewBag.CourseSlider)
+                                {
+                                    <div class="tiny-slide  tns-item tns-slide-active" id="tns1-item1">
+                                        <a class="customer-testi" href="/CourseDetails/@item.CourseId/@item.Title.Trim().Replace(" ", "-")">
+                                            <img src="/Course/Thumnail/@item.ImageCourse" class="img-fluid rounded shadow" alt="">
+                                        </a>
+                                        <div class="author">
+                                            <small class="text-muted text-center d-block">@item.Title</small>
+                                        </div>
+                                    </div>
+
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded shadow p-4 mt-1">
+                    <div class="section-title text-center mb-4 pb-2">
+                        <h4 class="title mb-4">لیست فاکتورهای شما</h4>
+                    </div>
+
+                    <div class="table-responsive bg-white shadow-md rounded-md mb-3">
+                        <table class="table mb-0 table-center" style="direction: rtl">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="border-bottom">ردیف</th>
+                                    <th scope="col" class="border-bottom" style="min-width: 250px;">شماره فاکتور </th>
+                                    <th scope="col" class="border-bottom" style="width: 150px;">تاریخ </th>
+                                    <th scope="col" class="border-bottom" style="width: 100px;">پرداختی </th>
+                                    <th scope="col" class="border-bottom" style="width: 100px;"> نمایش دستورات </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    @if (item == null)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <p class="text-warning text-center">فاکتوری وجود ندارد</p>
+                                            </td>
+                                        </tr>
+
+                                    }
+
+                                    <tr>
+                                        <td>@row</td>
+                                        <th>
+                                            <div class="align-items-center">
+                                                <img src="/UserPanel/litecoin.png" class="me-3" alt="" height="50">
+                                                <p class="mb-0 d-inline fw-normal h5"> <span class="text-muted h6">@item.OrderId</span></p>
+                                            </div>
+                                        </th>
+                                        <td>@item.CreateDate.ToShamci()</td>
+                                        <td>
+                                            @if (item.IsFinally)
+                                            {
+          
+                                                <p class="text-success">
+                                                    <i class="glyphicon glyphicon-ok">پرداخت شده </i>
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-danger">
+                                                    <i class="glyphicon glyphicon-remove">پرداخت نشده </i>
+                                                </p>
+
+                                            }
+
+                                        </td>
+                                        <td>
+                                            <a href="/UserPanel/MyOrder/ShowOrder/@item.OrderId" class="btn btn-sm btn-outline-info ">پرداخت</a>
+                                            <a class="btn btn-sm btn-outline-danger m-r-6 p-2" asp-controller="MyOrder" asp-action="DeleteOrder" asp-route-id="@item.OrderId"> حذف فاکتور </a>
+
+                                        </td>
+                                    </tr>
+                                    row += 1;
+                                 }
+
+                            </tbody>
+                        </table><!--end table-->
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div>
+    </div>
+    <!--end container-->
+</section>
+
+

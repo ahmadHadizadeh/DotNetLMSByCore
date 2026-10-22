@@ -1,0 +1,28 @@
+﻿@page "{id}"
+@model Asancode.Web.Pages.Admin.Course.DeleteEpisodeModel
+@{
+    ViewData["Title"] = "حذف بخش";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning">حذف دوره آموزشی</h1>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-11 col-sm-12">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="InfoShowEpisodeDeleteViewModel.Imagename" />
+                <input type="hidden" name="EpisodeId" value="@ViewData["EpisodeId"].ToString()" />
+                <ul class="list-group">
+                    <li class="list-group-item"> نام این بخش:@Model.InfoShowEpisodeDeleteViewModel.EpisodeTitle</li>
+                </ul>
+                <div class="row">
+                    <div class="col-md-8 col-sm-10">
+                        <input type="submit" class="btn btn-danger" value="حذف" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

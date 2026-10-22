@@ -1,0 +1,40 @@
+﻿@page
+@model Asancode.Web.Pages.Admin.Subscribe.IndexModel
+@{ 
+    ViewData["Title"] = "عضویت در خبرنامه";
+    int row = 1;
+}
+<section class="mt-5 pt-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="rounded shadow p-4 mt-1">
+                    <div class="section-title text-center mb-4 pb-2">
+                        <h4 class="title mb-4">لیست ایمیل ها</h4>
+                    </div>
+                    <div class="table-responsive bg-white shadow-md rounded-md mb-3">
+                        <table class="table mb-0 table-center" style="direction: rtl">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="border-bottom">ردیف</th>
+                                    <th scope="col" class="border-bottom" style="min-width: 250px;">ایمیل ها </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.SubscribeToNewsLetter)
+                                {
+                                    <tr>
+                                        <td>@row</td>
+                                        <td>@item.Email</td>
+                                    </tr>
+                                    row += 1;
+                                }
+                            </tbody>
+                        </table><!--end table-->
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div>
+    </div>
+    <!--end container-->
+</section>

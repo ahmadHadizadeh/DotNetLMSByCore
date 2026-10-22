@@ -1,0 +1,21 @@
+﻿@model IEnumerable<DataLayer.Course.CourseGroup>
+    <a href="javascript:void(0)">دسته بندی های آموزشی </a><span class="menu-arrow"></span>
+    <ul class="submenu">
+        @foreach (var group in Model.Where(g => g.ParentId == null))
+        {
+            <li class="has-submenu parent-menu-item active">
+                <a class="active" href="javascript:void(0)">@group.GroupTitle </a><span class="submenu-arrow"></span>
+                    @if (Model.Any(g => g.ParentId == group.GroupId))
+                    {
+                        <ul class="submenu">
+                            @foreach (var sub in Model.Where(g => g.ParentId == group.GroupId))
+                            {
+                                <li>
+                                    <a class="sub-menu-item" href="/Course?selectedGroup=@sub.GroupId"> @sub.GroupTitle </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+            </li>
+        }
+    </ul>

@@ -1,0 +1,5 @@
+﻿@model IEnumerable<Core.DTO.ShowCourseItemViewModel>
+@foreach (var item in Model)
+{
+    <partial name="_BoxCourse" model="@item" />
+}

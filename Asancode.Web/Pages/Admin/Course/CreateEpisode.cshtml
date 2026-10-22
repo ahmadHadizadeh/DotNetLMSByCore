@@ -1,0 +1,76 @@
+﻿@page "{id}"
+@model Asancode.Web.Pages.Admin.Course.CreateEpisodeModel
+@{
+    ViewData["Title"] = "ایجاد بخش جدید";
+}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="~/UploadEpisode/upload.js"></script>
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-info ">ایجاد دور ه ها</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container">
+    <div class="panel-body">
+        <div class="row">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="CourseEpisode.CourseId" />
+                <div class="col-md-7">
+                    <div class="form-group ">
+                        <label>عنوان بخش </label>
+                        <input class="form-control " type="text" asp-for="CourseEpisode.EpisodeTitle" />
+                        <span asp-validation-for="CourseEpisode.EpisodeTitle"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label>زمان بخش </label>
+                        <input class="form-control " type="text" asp-for="CourseEpisode.EpisodeTime" />
+                        <span asp-validation-for="CourseEpisode.EpisodeTime"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label>فایل بخش </label>
+                        <input type="file" name="fileEpisode" id="fileEpisode" />
+                        <br>
+                        <p class="text-muted"> فایل باید بارگذاری شود</p>
+                        @if (ViewData["IsExistFil"] != null)
+                        {
+                            <div class="alert alert-warning">
+                                <p class="text-danger">
+                                    فایل معتبر نمی باشد لطفا مجددا فایل را بارگذاری کنید
+                                </p>
+                            </div>
+                        }
+                        <span asp-validation-for="CourseEpisode.EpisodeFileName"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label> دسترسی</label>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" asp-for="CourseEpisode.IsFree" />
+                                رایگان است
+
+                            </label>
+                        </div>
+                    </div>
+                    <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                </div>
+            </form>
+        </div>
+        <br />
+        <br />
+        <h4 id="demo" class="alert-success text-center p-2"></h4>
+        <hr />
+        <div class="progress">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                0%
+            </div>
+        </div>
+        <hr />
+    </div>
+</div>

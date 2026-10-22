@@ -1,0 +1,44 @@
+﻿
+@{ ViewData["Title"] = " نتیجه پرداخت"; }
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 col-md-9 col-sm-8 col-xs-10">
+                @if (ViewBag.IsSuccess == true)
+                {
+
+                    <div class="text-center mt-4">
+                        <div class="icon d-flex align-items-center justify-content-center bg-soft-primary rounded-circle mx-auto" style="height: 90px; width:90px;">
+                            <i class="uil uil-thumbs-up align-middle h1 mb-0"></i>
+                        </div>
+                        <h3 class="my-4 fw-bold">کاربر گرامی: شارژ کیف پول شما با موفقیت انجام گردید</h3>
+                        <p class="bg-success text-white para-desc mx-auto uil uil-book"> مبلغ واریزی به کیف پول شما اضافه گردید</p>
+                        <div class="text-center">
+                            <ul class="nav nav-pills rounded-pill justify-content-center d-inline-block border py-1 px-2" id="pills-tab" role="tablist">
+                                <li class="nav-item d-inline-block">
+                                    <a class="nav-link px-3 rounded-pill yearly" id="Yearly" data-bs-toggle="pill" href="#Year" role="tab" aria-controls="Year" aria-selected="false">کد پیگیری شما: <span class="badge rounded-pill bg-success">@ViewBag.code  </span></a>
+                                </li>
+                            </ul>
+                        </div>
+                        <a href="/" class="btn btn-soft-primary mt-3">برو صفحه اصلی </a>
+                    </div>
+
+                }
+                 else
+                {
+                    <div class="text-center mt-4">
+                        <div class="alert alert-danger">
+                            <p class="text-center help-block">کاربر گرامی:</p>
+                            <hr />
+                            <h3 class="text-center help-block">پرداخت شما با شکست مواجه شده است</h3>
+
+                        </div>
+                        <a href="/" class="btn btn-soft-primary mt-3">برو صفحه اصلی </a>
+                    </div>
+
+                }
+            </div>
+        </div>
+    </div>
+</section>

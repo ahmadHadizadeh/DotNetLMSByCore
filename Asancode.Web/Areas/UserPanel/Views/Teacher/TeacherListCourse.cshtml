@@ -1,0 +1,65 @@
+﻿@using Core.Convertors
+@using DataLayer.Entities.Course
+@model IEnumerable<DataLayer.Entities.Course.Course>
+@{
+    ViewData["Title"] = "لیست دوره";
+    int row = 1;
+}
+<partial name="_HeaderUserpanel" />
+<section class="mt-5 pt-4">
+    <div class="container">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="rounded shadow p-4 mt-1">
+                    <div class="section-title text-center mb-4 pb-2">
+                        <h4 class="title mb-4">@ViewData["Title"]</h4>
+                    </div>
+                    <div class="table-responsive bg-white shadow-md rounded-md mb-3">
+                        <table class="table mb-0 table-center" style="direction: rtl">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="border-bottom">ردیف</th>
+                                    <th scope="col" class="border-bottom text-center" style="min-width: 250px;">عنوان </th>
+                                    <th scope="col" class="border-bottom" style="width: 150px;">وضعیت </th>
+                                    <th scope="col" class="border-bottom" style="width: 100px;">تعداد قسمت ها </th>
+                                    <th scope="col" class="border-bottom" style="width: 100px;"> نمایش دستورات </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@row</td>
+                                        <td>
+                                            <p class="text-warning text-center">@item.CourseTitle</p>
+                                        </td>
+                                        <td>
+                                            <p>@item.CourseStatuses.StatusTitle</p>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var count = @item.CourseEpisodes.Count();
+                                            }
+                                            <p>@count</p>
+                                        </td>
+                                        <td>
+                                            <p>
+                                                <a class="btn btn-info" asp-action="EpisodeLIst"asp-controller="Teacher"asp-route-courseId="@item.CourseId">مدیریت قسمتها</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    row += 1;
+                                }
+                            </tbody>
+                        </table><!--end table-->
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div>
+    </div>
+    <!--end container-->
+</section>
+
+
+

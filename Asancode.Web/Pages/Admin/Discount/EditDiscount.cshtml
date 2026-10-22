@@ -1,0 +1,43 @@
+﻿@page "{id}"
+@using Core.Convertors
+@model Asancode.Web.Pages.Admin.Discount.EditDiscountModel
+@{
+    ViewData["Title"] = "ویرایش تخفیف";
+}
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning text-center ">ویرایش تخفیف</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container">
+    <div class="row">
+        <form method="post">
+            <div class="col-md-5 col-md-offset-3">
+                <input type="hidden" asp-for="Discount.DiscountId" />
+                <div class="form-group">
+                    <label> کد تخفیف:</label>
+                    <input class="form-control" type="text" asp-for="Discount.DiscountCode" />
+                </div>
+                <div class="form-group">
+                    <label> درصد تخفیف :</label>
+                    <input class="form-control" type="number" asp-for="Discount.Percent" />
+                </div>
+                <div class=" form-group">
+                    <label> تعداد تخفیف:</label>
+                    <input class="form-control" type="number" asp-for="Discount.Count" />
+                </div>
+                <div class=" form-group">
+                    <label> تاریخ شروع:</label>
+                    <input class="form-control" name="startDt" value="@((Model.Discount.StartDate != null) ? Model.Discount.StartDate.Value.ToShamci() : "")" />
+                </div>
+                <div class="form-group">
+                    <label> تاریخ پایان:</label>
+                    <input class="form-control" name="endtDt" value="@((Model.Discount.EndDate != null) ? Model.Discount.EndDate.Value.ToShamci() : "")" />
+                </div>
+                <input type="submit" value="ویرایش اطلاعات" class="btn btn-success" />
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,139 @@
+﻿@page
+@using AngleSharp.Common
+@model Asancode.Web.Pages.Admin.Course.CreateCourseModel
+@{
+    ViewData["Title"] = "افزودن دوره جدید";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-info ">ایجاد دور ه ها</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container-fluid">
+    <div class="panel-body">
+        <div class="row ">
+            <form method="post" enctype="multipart/form-data">
+                <div class="col-md-7">
+                    <div class="form-group ">
+                        <label>عنوان دوره </label>
+                        <input class="form-control " type="text" asp-for="Course.CourseTitle" />
+                        <span asp-validation-for="Course.CourseTitle"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>گروه اصلی </label>
+                        <select class="form-control" asp-for="Course.GroupId" asp-items="@(ViewData["maingroup"]as SelectList)"></select>
+                        <span asp-validation-for="Course.GroupId"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>زیرگروه </label>
+                        <select class="form-control" asp-for="Course.SubGroup" asp-items="@(ViewData["subgroup"]as SelectList)"></select>
+                        <span asp-validation-for="Course.SubGroup"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>مدرس دوره</label>
+                        <select class="form-control" asp-for="Course.TeacherId" asp-items="@(ViewData["techear"]as SelectList)"></select>
+                        <span asp-validation-for="Course.TeacherId"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>سطح دوره</label>
+                        <select class="form-control" asp-for="Course.LevelId" asp-items="@(ViewData["Levels"] as SelectList)"></select>
+                        <span asp-validation-for="Course.LevelId"></span>
+                    </div> 
+                   @* <div class="form-group">
+                        <label>سطح دسترسی</label>
+                        <select class="form-control" asp-for="Course.PlanId" asp-items="@(ViewData["plan"] as SelectList)"></select>
+                        <span asp-validation-for="Course.PlanId"></span>
+                    </div>*@
+                    <div class="form-group">
+                        <label>وضعیت دوره</label>
+                        <select class="form-control" asp-for="Course.StatusId" asp-items="@(ViewData["Statues"] as SelectList)"></select>
+                        <span asp-validation-for="Course.StatusId"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>قیمت دوره </label>
+                        <input class="form-control" type="number" asp-for="Course.CoursePrice" value="0" />
+                        <span asp-validation-for="Course.CoursePrice"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>توضیحات </label>
+                        <textarea class="form-control" asp-for="Course.CourseDescription" rows="9"></textarea>
+                        <span asp-validation-for="Course.CourseDescription"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>فایل دموی دوره </label>
+                        <input type="file" name="demoUp" asp-for="Course.DemoFileName" />
+                        <span asp-validation-for="Course.DemoFileName"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>کلمات کلیدی </label>
+                        <input class="form-control" type="text" asp-for="Course.Tags" />
+                        <p class="help-block">کلمات را با - جدا کنید</p>
+                        <span asp-validation-for="Course.Tags"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                تصویر دوره آموزشی
+                            </div>
+                            <div class="panel-body">
+                                <img id="Myimagesrc" class="thumbnail" src="/UserPanel/Defult.jpg" />
+                                <input type="file" id="UplodImg" name="UplodImg" asp-for="Course.CourseImageName" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-md-12 col-sm-2 ">
+                        <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts
+    {
+    <script>
+        $("#Course_GroupId").change(function () {
+            $("#Course_SubGroup").empty();
+            $.getJSON("/home/GetSubGroup/" + $("#Course_GroupId :selected").val(),
+                function (data) {
+
+                    $.each(data,
+                        function () {
+                            $("#Course_SubGroup").append('<option value=' + this.value + '>' + this.text + '</option>');
+
+                        });
+
+                });
+
+
+        });
+
+        //OnTime Upload Img
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $('#Myimagesrc').attr('src', e.target.result);
+                }
+
+                reader.readAsDataURL(input.files[0]); // convert to base64 string
+            }
+        }
+
+        $("#UplodImg").change(function () {
+            readURL(this);
+        });
+    </script>
+    <script src="https://cdn.ckeditor.com/4.9.2/standard/ckeditor.js"></script>
+    <script>
+        CKEDITOR.replace('Course_CourseDescription', {
+            customConfig: '/js/Config.js'
+        });
+    </script>
+}

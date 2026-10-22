@@ -1,0 +1,50 @@
+﻿@{ViewData["Title"] = "فعال سازی حساب کاربری"; }
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h2>@ViewData["Title"]</h2>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account"></i> آسان کد </li>
+                        <li class="list-inline-item h6 date text-muted"><i class="mdi mdi-calendar-check"></i>فعالسازی حساب کاربری</li>
+                    </ul>
+                    <div class="page-next ">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"> فعال سازی حساب کاربری</li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="container mt-3" style="background-image: url('/UserPanel/successRegst.png'); padding: 75px; ">
+    <div class="row">
+        <div class="col-lg-11  col-md-9 col-xs-10">
+            <div class="align-items-center alert alert-success text-ce nter text-capitalize p-2 mr-5">
+                @if (ViewBag.IsActive)
+                {
+                      <div class="alert alert-success text-center">
+                         <p class="text-center">حساب کاربری شما با موفقیت فعال شد</p>
+                              <br />
+                        <a href="/Login" class="btn btn-icon btn-soft-primary" title="ورود"><i class="uil uil-user icons"></i></a>
+
+                      </div>
+                }
+
+                else
+                {
+                          <div class="alert alert-danger text-center">
+                              <p class="text-center">حساب کاربری با مشخصات ارسال شده یافت نشد</p>
+                           </div>
+
+                }
+
+            </div>
+        </div>
+    </div>
+</div>

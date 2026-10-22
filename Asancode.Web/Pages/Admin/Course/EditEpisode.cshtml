@@ -1,0 +1,59 @@
+﻿@page "{id}"
+@model Asancode.Web.Pages.Admin.Course.EditEpisodeModel
+@{
+    ViewData["Title"] = "ویرایش بخش";
+}
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-info ">ویرایش بخش</h1>
+    </div>
+</div>
+<div class="container-fluid">
+    <div class="panel-body">
+        <div class="row ">
+            <form method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="CourseEpisode.CourseId" />
+                <input asp-for="CourseEpisode.EpisodeFileName" />
+                <input type="hidden" asp-for="CourseEpisode.EpisodeId" />
+                <div class="col-md-7">
+                    <div class="form-group ">
+                        <label>عنوان بخش </label>
+                        <input class="form-control " type="text" asp-for="CourseEpisode.EpisodeTitle" />
+                        <span asp-validation-for="CourseEpisode.EpisodeTitle"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label>زمان بخش </label>
+                        <input class="form-control " type="text" asp-for="CourseEpisode.EpisodeTime" />
+                        <span asp-validation-for="CourseEpisode.EpisodeTime"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label>فایل بخش </label>
+                        <input type="file" name="fileEpisode" />
+                        <p class="text-muted"> فایل باید بارگذاری شود</p>
+                        @if (ViewData["IsExistFil"] != null)
+                        {
+                            <div class="alert alert-warning">
+                                <p class="text-danger">
+                                    فایل معتبر نمی باشد لطفا مجددا فایل را بارگذاری کنید
+                                </p>
+                            </div>
+                        }
+                        <span asp-validation-for="CourseEpisode.EpisodeFileName"></span>
+                    </div>
+                    <div class="form-group ">
+                        <label> دسترسی</label>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" asp-for="CourseEpisode.IsFree" />
+                                رایگان است
+
+                            </label>
+                        </div>
+                    </div>
+                    <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

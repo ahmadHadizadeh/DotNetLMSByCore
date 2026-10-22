@@ -1,0 +1,189 @@
+﻿@using Core.Services.Interfaces
+@inject IPermissionService _PermissionService
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت آسان کد</title>
+    <link href="/Admin/css/bootstrap-rtl.css" rel="stylesheet">
+    <link href="/Admin/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="/Admin/css/plugins/morris/morris-0.4.3.min.css" rel="stylesheet">
+    <link href="/Admin/css/plugins/timeline/timeline.css" rel="stylesheet">
+    <link  href="/DateTimPickr/css/persianDatepicker-default.css"rel="stylesheet" />
+    <link href="/Admin/css/CssAhmad.css" rel="stylesheet">
+    <link href="/Admin/css/sb-admin.css" rel="stylesheet">
+    <style>
+
+        div.sidebar-collapse ul li {
+            padding: 2px;
+        }
+
+            div.sidebar-collapse ul li a {
+                font-size: large;
+                border-radius: 9px;
+                margin: 3px;
+                padding-right: 26px;
+                line-height: 5px;
+                color: #676f7f;
+            }
+
+                div.sidebar-collapse ul li a:hover {
+                    background-color: #a5d1e1;
+                    color: #09a1ff
+                }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default navbar-fixed-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand text-center" href="/">Asancode.Com</a>
+            </div>
+            <div class="navbar-default navbar-static-side" role="navigation">
+                <div class="sidebar-collapse">
+                    <ul class="nav" id="side-menu">
+                        <li class="sidebar-search">
+                            <div class="input-group custom-search-form">
+                                <input type="text" class="form-control" placeholder="Search...">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="/admin" style="background-color: #35bbca;">  پنل ادمین</a>
+                        </li>
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="#" style="background-color: #46b281; color: antiquewhite; font-size: x-large">  اطلاعیه ها </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/Banner">بنر </a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/Banner/CreateBanner">افزودن بنر</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin/MgUser" style="background-color: #0191B4; color: antiquewhite; font-size:x-large">  کاربران </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/MgUser">مدیریت کاربران </a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/MgUser/CreateNewUser">افزودن کاربران</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin/MgUser" style="background-color: #f8d90f; color: antiquewhite; font-size:x-large">  نقش های کاربران </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/roles"> مدیریت نقش ها </a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/roles/CreateRole">ایجاد نقش های جدید </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin/Course" style="background-color: #fe7a15; color: antiquewhite; font-size:x-large"> مدیریت دوره ها </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/Course/">دوره ها</a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/Course/CreateCourse"> افزودن دوره ها </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin/Discount" style="background-color: #d3dd18; color: antiquewhite; font-size:x-large"> مدیریت تخفیف ها </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/Discount">تخفیف ها</a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/Discount/CreateDiscount"> افزودن تخفیف ها </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin/CourseGroup" style="background-color: #f99999; color: antiquewhite; font-size:x-large"> مدیریت منوها </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/CourseGroup/"> گروه های منو </a>
+                                    </li>
+                                    <li>
+                                        <a href="~/admin/CourseGroup/CreateNewCourseGroup">ایجاد منوی جدید وب سایت</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin" style="background-color: #E96A5E; color: antiquewhite; font-size:x-large"> مقالات </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/Blog/"> مقالات </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        @if (_PermissionService.CheckAcsessPermissionRole(1, User.Identity.Name))
+                        {
+                            <li>
+                                <a href="~/admin" style="background-color: #37C6C6; color: antiquewhite; font-size:x-large">مدیریت مشتریان </a>
+                                <ul class="nav nav-second-level">
+                                    <li>
+                                        <a href="~/admin/ContactUs"> پیام های قسمت تماس با ما </a>
+                                        <a href="~/admin/Subscribe"> عضویت در خبرنامه </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div id="page-wrapper">
+            @RenderBody()
+        </div>
+    </div>
+    <script src="~/Admin/js/jquery-3.2.1.min.js"></script>
+    <script src="~/Admin/js/bootstrap.min.js"></script>
+    <script src="~/Admin/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="~/Admin/js/plugins/morris/raphael-2.1.0.min.js"></script>
+    <script src="~/Admin/js/plugins/morris/morris.js"></script>
+    <script src="~/Admin/js/sb-admin.js"></script>
+    <script src="~/Admin/js/demo/dashboard-demo.js"></script>
+    @RenderSection(name: "Scripts", required: false)
+</body>
+</html>

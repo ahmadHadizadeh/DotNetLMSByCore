@@ -1,0 +1,84 @@
+﻿@page
+@model Asancode.Web.Pages.Admin.Course.IndexModel
+@{
+    ViewData["Title"] = "لیست دوره ها";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-warning ">لیست دوره ها</h1>
+    </div>
+</div>
+<div class="col-lg-12">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            لیست دوره ها
+        </div>
+       
+        <div class="panel-body">
+            <div class="table table-responsive">
+                <div class="form-inline" role="grid">
+                    <div class="row">
+                        <form>
+                            <div class="col-sm-5 col-md-5">
+                                <input type="text" name="filterTitle" class="form-control" placeholder="نام دوره آموزشی" />
+                            </div>
+
+                            <div class="col-sm-2 col-md-2">
+                                <button type="submit" class="btn btn-circle btn-success">بگرد</button>
+                                <a class="btn btn-warning btn-circle " href="/Admin/Course">خالی</a>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline" role="grid">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <a href="/Admin/Course/CreateCourse" class="btn btn-outline btn-success"> ایجاد دوره جدید</a>
+                                <a href="/Admin/Course/ListDeleteCourse" class="btn  btn-info">نمایش دوره های حذف شده</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-bordered table-striped table-hover ">
+                    <thead>
+                    <tr>
+                        <th class="text-center ">تصویر دوره </th>
+                        <th class="text-center "> عنوان دوره</th>
+                        <th class="text-center ">تعداد جلسات</th>
+                        <th class="text-center ">عمیلات</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.ShowListForCourse.Course)
+                    {
+                        <tr class="justify-content-center">
+                            <td class="text-center text-muted"><img class="text-center"  style="width: 180px" src="/Course/Thumnail/@item.CourseImageName" class="thumbnail" /></td>
+                            <td class="text-center ">@item.CourseTitle</td>
+                            <td class="text-center">@item.CourseEpisodes.Count()</td>
+                            <td>
+                                <a class="btn btn-group-sm btn-sm btn-info" href="/Admin/Course/IndexEpisode/@item.CourseId">ایجاد بخش جدید</a>
+                                <a class="btn btn-group-sm btn-sm btn-warning" href="/Admin/Course/EditCourse/@item.CourseId">ویرایش</a>
+                                <a class="btn btn-group-sm btn-sm btn-danger" href="/Admin/Course/DeleteCourse/@item.CourseId">حذف دوره</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+                <div class="row">
+                    <div class="col-sm-6 text-left ">
+                        <div class="dataTables_paginate">
+                            <ul class="pagination">
+                                @for (int i = 1; i <= Model.ShowListForCourse.PageCount; i++)
+                                {
+                                    <li class="paginate_button @((i == Model.ShowListForCourse.CurrentPage) ? "active" : "")" aria-controls="dataTables-example" tabindex="0">
+                                        <a href="/Admin/Course?pageId=@i">@i</a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

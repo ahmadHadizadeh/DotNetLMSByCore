@@ -1,0 +1,200 @@
+﻿@using Core.Convertors
+@using System.Security.Claims;
+@model Core.DTO.UserQuestionViewModel
+@{
+
+    ViewData["Title"] = "پرسش" + Model.Question.Title;
+}
+<style>
+   .isTrue {
+        border: 2px solid #008000;
+        color: green;
+    }
+</style>
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h3> </h3>
+                    <ul class="list-unstyled mt-4">
+                        <li class="list-inline-item h6 user text-muted me-2"><i class="mdi mdi-account">پاسخ های کاربران</i></li>
+                    </ul>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"><a href="#">انجمن </a></li>
+                                <li class="breadcrumb-item"><a href="/Forum/ShowQuestion/@Model.Question.QuestionId">@Model.Question.Title</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div><!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-6">
+                <div class="rounded shadow" style="border: 2px solid #ff1144; margin-bottom: 30px;">
+                    <div class="d-flex justify-content-between p-4 bg-light">
+                        <h6 class="mb-0">@Model.Question.Title </h6>
+                        <h6 class="mb-0">تاریخ </h6>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="d-flex justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <a class="pe-3" href="#">
+                                    <img src="/UserPanel/@Model.Question.User.UserImage" class="img-fluid avatar avatar-md-sm rounded-circle shadow" alt="تصویر کاربر پاسخ دهنده">
+                                </a>
+                                <div class="flex-1 commentor-detail">
+                                    <h6 class="mb-0"><a href="javascript:void(0)" class="media-heading text-dark">@Model.Question.User.UserName</a></h6>
+                                    <small class="text-muted">پرسش </small>
+                                </div>
+                            </div>
+                            <small class="text-muted">@Model.Question.CreateDate.ToShamci() </small>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-muted mb-0"> @Html.Raw(Model.Question.Body)</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                @foreach (var answer in Model.Answer)
+                {
+                    <div class="rounded shadow mt-2  mb-4   @((answer.IsTrue)?"isTrue":"") ">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <a class="pe-3" href="#">
+                                        <img src="/UserPanel/@answer.User.UserImage" class="img-fluid avatar avatar-small me-2 rounded-circle" alt="عکس کاربر پاسخ دهنده">
+                                    </a>
+                                    <div class="flex-1 commentor-detail">
+                                        <h6 class="mb-0">
+                                            <a href="javascript:void(0)" class="media-heading text-dark">@answer.User.UserName</a>
+                                        </h6>
+                                        <small class="text-muted">پاسخ </small>
+                                    </div>
+                                </div>
+                                <small class="text-muted"> @answer.CreateDate.ToShamci()</small>
+                            </div>
+                            <div class="mt-3">
+                                <p class="mb-0">
+                                    @Html.Raw(answer.BodyAnswer)
+                                </p>
+
+                                @if (User.Identity is { IsAuthenticated: true } && Model.Question.UserId == int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier).ToString()))
+                                {
+
+                                    <a id="btcorect" class="btn btn-pills btn-outline-secondary mt-2 me-2" asp-action="SelectIsTrueAnswer" asp-route-questionId="@Model.Question.QuestionId" asp-route-answerId="@answer.AnswerId">
+                                        پاسخ صحیح
+                                    </a>
+
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                }
+
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 style="font-size: 18px;" class="text-success text-muted">افزودن پاسخ جدید</h6>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="Answer">
+                                <div class="form-group">
+                                    <input type="hidden" name="id" value="@Model.Question.QuestionId" />
+                                    <textarea name="body"></textarea>
+                                    <button class="btn btn-outline-info mt-3 me-2" type="submit">ثبت پاسخ شما</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger ">
+                        <p class="d-inline "> لطفا جهت پاسخ گویی به این سوال <a class="d-inline p-2 text-center text-white" href="/Login">وارد سایت</a> شوید</p>
+                    </div>
+                }
+
+            </div><!--end col-->
+
+            <div class="col-lg-4 col-md-6 col-12 mt-4 mt-sm-0 pt-2 pt-sm-0">
+                <div class="card border-0 sidebar sticky-bar rounded shadow">
+                    <div class="card-body">
+                        <!-- پست های اخیر -->
+                        <div class="widget mb-4 pb-2 pr-5">
+                            <h5 class="widget-title">دوره های پر مخاطب</h5>
+                            @foreach (var item in ViewBag.listCoursePopular)
+                            {
+                                <div class="mt-4">
+                                    <div class="clearfix post-recent">
+                                        <div class="post-recent-thumb float-start ">
+                                            <a href="/CourseDetails/@item.CourseId/@item.Title">
+                                                <img src="/course/Thumnail/@item.ImageName" class=" avatar avatar-large mt-3 mt-sm-0 me-2 rounded" alt="">
+                                            </a>
+                                        </div>
+
+                                    </div>
+                                    <div class="post-recent-content float-start">
+                                        <a href="/CourseDetails/@item.CourseId/@item.Title">@item.Title</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <!-- پست های اخیر -->
+                        <!-- SOCIAL -->
+                        <div class="widget">
+                            <h5 class="widget-title">دنبال کردن ما</h5>
+                            <ul class="list-unstyled social-icon mb-0 mt-4">
+                                <li class="list-inline-item"><a href="http://instagram.com/Asan_Code" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-instagram fea icon-sm fea-social"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a></li>
+                                <li class="list-inline-item"><a href="https://www.facebook.com/" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-facebook fea icon-sm fea-social"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a></li>
+                                <li class="list-inline-item"><a href="https://www.linkedin.com/in/ahmad-hadizadeh-374683132/" class="rounded" title="linkedin"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin fea icon-sm fea-social"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+                                <li class="list-inline-item"><a href="mailto:myAsancode@gmail.com" class="rounded"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail fea icon-sm fea-social"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg></a></li>
+                            </ul><!--end icon-->
+                        </div>
+                        <!-- SOCIAL -->
+                    </div>
+                </div>
+            </div>
+        </div><!--end row-->
+    </div><!--end container-->
+
+</section>
+
+
+@section Scripts
+{
+    <script src="https://cdn.ckeditor.com/4.15.1/standard/ckeditor.js"></script>
+
+
+    <script>
+        CKEDITOR.replace('body', {
+            customConfig: '/js/Config.js'
+        });
+    </script>
+    @*<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#btcorect").click(function () {
+                $("#answer_BodyAnswer").css("color","green");
+        });
+
+    </script>*@
+}

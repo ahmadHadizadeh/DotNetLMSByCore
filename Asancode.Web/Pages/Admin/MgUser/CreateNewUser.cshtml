@@ -1,0 +1,87 @@
+﻿@page
+@using DataLayer.Entities.User
+@model Asancode.Web.Pages.Admin.MgUser.CreateNewUserModel
+@{
+    ViewData["Title"] = "افزودن کاربر جدید";
+    List<Roles> rolese = ViewData["Role"] as List<Roles>;
+
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header">افزودن کاربر جدید</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container">
+    <div class="row">
+        <form method="post" enctype="multipart/form-data">
+            <div class="col-md-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        افزودن کاربر جدید
+                    </div>
+                    <div class="panel-body ">
+                        <div class="col-md-8 col-sm-5 form-group">
+                            <input class="form-control" asp-for="CreateNewUserViewModel.UserName" type="text" placeholder="لطفا نام مورد نظر را وارد کنید" />
+                        </div>
+                        <div class="col-md-8 col-sm-5 form-group">
+                            <input type="email" class="form-control" asp-for="CreateNewUserViewModel.Email" placeholder="لطفا ایمیل مورد نظر را وارد کنید" />
+                        </div>
+                        <div class="col-md-8 col-sm-5 form-group">
+                            <input type="text" class="form-control" asp-for="CreateNewUserViewModel.Password" placeholder="لطفا کلمه عبور مورد نظر را وارد کنید" />
+                        </div>
+                        <div class="col-md-8 col-sm-5 form-group">
+                            <div class="form-group">
+                                <label>نقش کاربری</label>
+                                @foreach (var item in rolese)
+                                {
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" name="selectedRoles" value="@item.RoleId">@item.RolesTitles
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-md-12 col-sm-2 ">
+                                <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        تصاویر کاربران
+                    </div>
+                    <div class="panel-body">
+                        <img src="/UserPanel/Defult.jpg" Id="Myimagesrc" style="max-width: 285px; padding: 20px; margin-right: 15px;" />
+                        <input type="file" id="UplodImg" asp-for="CreateNewUserViewModel.UserImage" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts
+    {
+    <script>
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $('#Myimagesrc').attr('src', e.target.result);
+                }
+
+                reader.readAsDataURL(input.files[0]); // convert to base64 string
+            }
+        }
+
+        $("#UplodImg").change(function () {
+            readURL(this);
+        });
+    </script>
+}

@@ -1,0 +1,102 @@
+﻿@using DataLayer.Course
+@using Core.Convertors
+@model Tuple<List<Core.DTO.ShowBlogViewModel>, int>
+@{
+    ViewData["Title"] = "مقالات";
+}
+<section class="bg-half bg-light d-table w-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center">
+                <div class="page-next-level">
+                    <h4 class="title"> لیست همه مقالات آسان کد <span class="badge rounded-pill bg-muted"> @Model.Item1.Count </span></h4>
+                    <div class="page-next">
+                        <nav aria-label="breadcrumb" class="d-inline-block">
+                            <ul class="breadcrumb bg-white rounded shadow mb-0">
+                                <li class="breadcrumb-item"><a href="/">آسان کد </a></li>
+                                <li class="breadcrumb-item active" aria-current="page"> <a href="/Blog">لیست مقالات آسان کد </a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>  <!--end col-->
+        </div><!--end row-->
+    </div> <!--end container-->
+</section>
+<div class="position-relative">
+    <div class="shape overflow-hidden text-white">
+        <svg viewBox="0 0 2880 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 48H1437.5H2880V0H2160C1442.5 52 720 0 720 0H0V48Z" fill="currentColor"></path>
+        </svg>
+    </div>
+</div>
+<div class="subcribe-form mt-5 pt-2 aos-init aos-animate" data-aos="fade-up" data-aos-duration="2200">
+    <form asp-action="Index" method="get" id="formFilter" class="text-right">
+        <div class="mb-0">
+            <input type="hidden" name="pageId" value="@ViewBag.pageId.ToString()" />
+            <input type="text" class="form-control rounded-pill " style="background-color:#f2f2f2; " id="help" name="filter" placeholder="عنوان مورد نظر ...">
+            <button type="submit" class="btn btn-pills btn-primary">جستجو </button>
+        </div>
+    </form>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            @foreach (var item in Model.Item1)
+            {
+                <div class="col-lg-6 col-12 mb-4 pb-2">
+                    <div class="card blog rounded border-0 shadow overflow-hidden">
+                        <div class="row align-items-center g-0">
+                            <div class="col-md-6">
+                                <img src="/Blog/Thumnail/@item.BlogImage" class="img-fluid" alt="">
+                                <div class="overlay bg-dark"></div>
+                                <div class="author">
+                                    <small class="text-light user d-block"><i class="uil uil-user"></i>@item.BlogWriter</small>
+                                    <small class="text-light date"><i class="uil uil-calendar-alt"></i>@item.BlogDateTime.ToShamci() </small>
+                                </div>
+                            </div><!--end col-->
+                            <div class="col-md-6">
+                                <div class="card-body content">
+                                    <h5><a href="/ShowBlog/@item.BlogId/@item.BlogTitle.Trim().Replace(" ", "-")" class="card-title title text-dark">@item.BlogTitle</a></h5>
+                                    <p class="text-muted mb-0">@item.AbstractText</p>
+                                    <div class="post-meta d-flex justify-content-between mt-3">
+
+                                        <a href="/TestBlog/@item.BlogId/@item.BlogTitle.Trim().Replace(" ", "-")" class="text-muted readmore">ادامه مطلب <i class="uil uil-angle-left-b align-middle"></i></a>
+                                    </div>
+                                </div>
+                            </div><!--end col-->
+                        </div> <!--end row-->
+                    </div><!--end blog post-->
+                </div><!--end col-->
+
+            }
+            <!-- PAGINATION START -->
+            <div class="col-12 mt-4 pt-2">
+                @if (Model.Item2 > 1)
+                {
+                    <ul class="pagination justify-content-center mb-0">
+                        @for (int i = 1; i <= Model.Item2; i++)
+                        {
+                            <li class="page-item"><a class="page-link" href="/Blog?pageId=@i">@i</a></li>
+                        }
+                    </ul>
+                }
+            </div><!--end col-->
+            <!-- PAGINATION END -->
+        </div><!--end row-->
+    </div><!--end container-->
+</section>
+@section Scripts
+    {
+    <script>
+        function selectCourse() {
+
+            $("#formFilter").submit();
+        }
+    </script>
+    <script>
+        // Material Select
+        $('.mdb-select').materialSelect({
+        });
+    </script>
+}

@@ -1,0 +1,56 @@
+﻿@page
+@model Asancode.Web.Pages.Admin.Banner.CreateBannerModel
+@{
+
+}
+<div class="row">
+    <div class="col-lg-12">
+        <h1 class="page-header alert alert-info ">ایجاد اطلاعیه جدید</h1>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="container-fluid">
+    <div class="panel-body">
+        <div class="row ">
+            <form method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                تصوبر بنر سایت
+                            </div>
+                            <div class="panel-body">
+                                <img id="Myimagesrc" class="thumbnail" src="/Banner/baner.jpg" />
+                                <input type="file" id="UplodImg" name="UplodImg" asp-for="BannerInformation.BannerImageName" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-md-12 col-sm-2 ">
+                        <input type="submit" value="ذخیره اطلاعات" class="btn btn-success" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@section Scripts
+{
+    <script>
+        //OnTime Upload Img
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $('#Myimagesrc').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]); // convert to base64 string
+            }
+        }
+        $("#UplodImg").change(function () {
+            readURL(this);
+        });
+    </script>
+}

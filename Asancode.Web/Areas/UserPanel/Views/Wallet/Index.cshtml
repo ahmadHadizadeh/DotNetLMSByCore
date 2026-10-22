@@ -1,0 +1,99 @@
+﻿@using Core.Convertors
+@using Core.DTO
+@model Core.DTO.ChargeWalletviewModel
+@{ ViewData["Title"] = "کیف پول شما";
+    int row = 1;
+}
+
+<partial name="_HeaderUserpanel" />
+<section class="section ">
+    <div class="container mt-lg-3">
+        <div class="row">
+            <partial name="_SidBar" />
+            <div class="col-lg-8 col-md-10 col-sm-10 mt-5 col-10 d-sm-block">
+                <div class="rounded shadow p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">شارژ کیف پول شما:</h5>
+                        <hr />
+                    </div>
+                    <p>درگاه پرداخت زرین پال انتخاب مطمئنِ همه  کسب و کارهای آنلاین</p>
+                    <div class="row">
+                        <div class="col-md-12 mt-4 pt-2 text-center justify-content-center">
+                            <div class="card rounded shadow bg-light border-0">
+                                <div class="card-body p-3">
+                                    <img src="/UserPanel/Zarinpal.png" class="text-end" alt="لگو زرین پال" width="240" height="200">
+                                    <div class="mt-4">
+                                        <form asp-action="Index" method="post">
+                                            <div class="mt-4 pt-3 mb-0">
+                                                <div class="input-group-sm">
+                                                    <input type="number" asp-for="Amount" width="100" class="form-control d-block" placeholder="مبلغ شارژ کیف پول به تومان" required="">
+                                                    <br />
+                                                    <div asp-validation-summary="All" class="text-danger"></div>
+                                                </div>
+                                                <div>
+                                                    <button class="btn btn-primary pull-left " type="submit">شارژ کیف پول </button>
+                                                </div>
+                                            </div>
+                                        </form><!--end form-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="section-title text-center mb-4 pb-2">
+                                <h4 class="title mt-4 ">لیست پرداختی های شما</h4>
+                            </div>
+                            @{
+                                List<WalletInformationViewModel> list = ViewBag.listWallet as List<WalletInformationViewModel>;
+                            }
+                            <div class="table-responsive bg-white shadow-md rounded-md">
+                                <table class="table mb-0  table-center">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" class="border-bottom">ردیف</th>
+                                            <th scope="col" class="border-bottom">تاریخ </th>
+                                            <th scope="col" class="border-bottom">مبلغ </th>
+                                            <th scope="col" class="border-bottom">نوع تراکنش </th>
+                                            <th scope="col" class="border-bottom"> شرح تراکنش </th>
+                                            <th scope="col" class="border-bottom">عملیات </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in list)
+                                        {
+
+                                            <tr>
+                                                <td>@row</td>
+                                                <td>
+                                                    @item.CreateDate.ToShamci()
+                                                </td>
+                                                <td>
+                                                    @item.Amount.ToString("#,0 تومان")
+                                                </td>
+
+                                                <td>
+                                                    @if (item.TypeId == 1)
+                                                    {
+                                                        <p class="text-success">واریز به حساب</p> }
+                                                    else
+                                                    {
+                                                        <p class="text-danger">برداشت از حساب</p>}
+                                                </td>
+                                                <td>
+                                                    @Html.Raw(item.Description.Replace("#", " "))
+                                                </td>
+                                                <td>
+                                                    <a class="btn btn-sm btn-outline-danger m-r-6 p-2" asp-controller="Wallet" asp-action="DeleteWallet" asp-route-id="@item.WalletId"> حذف فاکتور </a>
+                                                </td>
+                                            </tr>
+                                            row += 1;
+
+                                        }
+                                    </tbody>
+                                </table><!--end table-->
+                            </div>
+                        </div><!--end col-->
+                    </div>
+                </div>
+            </div>
+        </div><!--end row-->
+    </div><!--end container-->
+</section>
