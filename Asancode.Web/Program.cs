@@ -54,6 +54,16 @@ builder.Services.AddAuthentication(options =>
     options.LoginPath = "/Login";
     options.LogoutPath = "/Logout";
     options.ExpireTimeSpan = TimeSpan.FromMinutes(43200);
+})
+.AddGoogle(option =>
+{
+    option.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+    option.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+})
+.AddFacebook(facebookOptions =>
+{
+    facebookOptions.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
+    facebookOptions.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
 });
 
 // Form limits
