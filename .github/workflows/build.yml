@@ -1,4 +1,4 @@
-name: Build
+name: Build and test
 
 on:
   push:
@@ -17,12 +17,13 @@ concurrency:
 
 jobs:
   build:
-    name: Restore and build
+    name: Restore, build, and test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
 
     steps:
       - name: Checkout source
@@ -36,8 +37,11 @@ jobs:
       - name: Verify toolchain
         run: dotnet --info
 
-      - name: Restore dependencies
+      - name: Restore dependencies (NuGet audit enabled)
         run: dotnet restore Asancode.sln --verbosity minimal
 
       - name: Build solution
         run: dotnet build Asancode.sln --configuration Release --no-restore --verbosity minimal
+
+      - name: Run automated tests
+        run: dotnet test Asancode.sln --configuration Release --no-build --verbosity minimal

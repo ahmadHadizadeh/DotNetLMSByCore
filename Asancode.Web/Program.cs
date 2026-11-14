@@ -1,4 +1,4 @@
-﻿using AngleSharp;
+using AngleSharp;
 using Asancode.Web.ExterNalProvider;
 using Core.Convertors;
 using Core.Services;
@@ -135,3 +135,5 @@ app.MapControllerRoute(
 #endregion
 
 app.Run();
+
+public partial class Program;
