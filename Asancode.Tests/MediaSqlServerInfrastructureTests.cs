@@ -15,12 +15,14 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
 
+        var cancellationToken = TestContext.Current.CancellationToken;
+
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", dbContext.Database.ProviderName);
-        Assert.True(await dbContext.Database.CanConnectAsync());
+        Assert.True(await dbContext.Database.CanConnectAsync(cancellationToken));
         Assert.Contains(
             "20260218105211_mig1_FirstDb",
-            await dbContext.Database.GetAppliedMigrationsAsync());
+            await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken));
 
-        Assert.Equal(0, await dbContext.CourseEpisode.CountAsync());
+        Assert.Equal(0, await dbContext.CourseEpisode.CountAsync(cancellationToken));
     }
 }
