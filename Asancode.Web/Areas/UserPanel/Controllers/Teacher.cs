@@ -110,9 +110,7 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> DropzoneTarget(
-            [FromForm] List<IFormFile> files,
-            [FromQuery] int courseId)
+        public async Task<IActionResult> DropzoneTarget([FromQuery] int courseId)
         {
             var userName = User.Identity?.Name;
             if (string.IsNullOrWhiteSpace(userName))
@@ -129,10 +127,21 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             var userId = _userService.GetUserIdByUsername(userName);
             if (course.TeacherId != userId)
             {
+                // Reject cross-course uploads before reading or buffering the multipart body.
                 return Forbid();
             }
 
-            if (files == null || files.Count != 1)
+            if (!Request.HasFormContentType)
+            {
+                return UnsupportedMediaType();
+            }
+
+            // The antiforgery filter validates the request header before the action runs.
+            // Only after authentication and course ownership succeed do we parse the form.
+            var form = await Request.ReadFormAsync(HttpContext.RequestAborted);
+            var files = form.Files;
+
+            if (files.Count != 1)
             {
                 return BadRequest(new { error = "Exactly one archive file is required." });
             }
