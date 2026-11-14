@@ -1,3 +1,4 @@
+using System.Net;
 using Asancode.Tests.Infrastructure;
 using DataLayer.Context;
 using Microsoft.EntityFrameworkCore;
@@ -24,5 +25,49 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
             await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken));
 
         Assert.Equal(0, await dbContext.CourseEpisode.CountAsync(cancellationToken));
+    }
+
+    [Fact]
+    public async Task Teacher_can_manage_episodes_only_for_a_course_they_own()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        MediaTeacherCourseScenario scenario;
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            scenario = await MediaTestDataSeeder.SeedTeacherCourseAsync(
+                dbContext,
+                cancellationToken);
+        }
+
+        using var ownerClient = fixture.Factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+        ownerClient.DefaultRequestHeaders.Add(
+            MediaTestAuthenticationHandler.UserHeaderName,
+            scenario.OwnerUserName);
+
+        using var otherTeacherClient = fixture.Factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+        otherTeacherClient.DefaultRequestHeaders.Add(
+            MediaTestAuthenticationHandler.UserHeaderName,
+            scenario.OtherTeacherUserName);
+
+        using var ownerResponse = await ownerClient.GetAsync(
+            $"/add-eppisode/{scenario.CourseId}",
+            cancellationToken);
+        using var otherTeacherResponse = await otherTeacherClient.GetAsync(
+            $"/add-eppisode/{scenario.CourseId}",
+            cancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, ownerResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, otherTeacherResponse.StatusCode);
+        Assert.Contains("TeacherListCourse", otherTeacherResponse.Headers.Location?.OriginalString);
     }
 }

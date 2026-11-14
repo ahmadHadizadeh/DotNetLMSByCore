@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Asancode.Tests.Infrastructure;
 
@@ -21,6 +24,22 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 ["Authentication:Facebook:AppId"] = "integration-test-app",
                 ["Authentication:Facebook:AppSecret"] = "integration-test-secret"
             });
+        });
+
+        builder.ConfigureTestServices(services =>
+        {
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = MediaTestAuthenticationHandler.SchemeName;
+                    options.DefaultAuthenticateScheme = MediaTestAuthenticationHandler.SchemeName;
+                    options.DefaultChallengeScheme = MediaTestAuthenticationHandler.SchemeName;
+                    options.DefaultForbidScheme = MediaTestAuthenticationHandler.SchemeName;
+                    options.DefaultSignInScheme = MediaTestAuthenticationHandler.SchemeName;
+                })
+                .AddScheme<AuthenticationSchemeOptions, MediaTestAuthenticationHandler>(
+                    MediaTestAuthenticationHandler.SchemeName,
+                    _ => { });
         });
     }
 }
