@@ -99,11 +99,17 @@ var app = builder.Build();
 
 #region Middleware
 
-// 404 handler
+// Redirect browser-facing HTML 404 responses to the legacy error page.
+// Preserve the actual 404 status for JSON/XHR and other non-HTML clients.
 app.Use(async (context, next) =>
 {
     await next();
-    if (context.Response.StatusCode == 404)
+
+    var acceptsHtml = context.Request.Headers.Accept
+        .ToString()
+        .Contains("text/html", StringComparison.OrdinalIgnoreCase);
+
+    if (context.Response.StatusCode == StatusCodes.Status404NotFound && acceptsHtml)
     {
         context.Response.Redirect("/Home/Error404");
     }

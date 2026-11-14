@@ -178,6 +178,24 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Browser_html_404_requests_keep_the_legacy_error_redirect()
+    {
+        using var client = fixture.Factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+
+        using var response = await client.GetAsync(
+            "/no-such-route-for-media-test",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/Home/Error404", response.Headers.Location?.OriginalString);
+    }
+
     private async Task<MediaTeacherCourseScenario> SeedScenarioAsync()
     {
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
@@ -200,6 +218,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         client.DefaultRequestHeaders.Add(
             MediaTestAuthenticationHandler.UserHeaderName,
             userName);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         return client;
     }
