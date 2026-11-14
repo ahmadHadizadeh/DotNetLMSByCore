@@ -68,6 +68,6 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
 
         Assert.Equal(HttpStatusCode.OK, ownerResponse.StatusCode);
         Assert.Equal(HttpStatusCode.Redirect, otherTeacherResponse.StatusCode);
-        Assert.Contains("TeacherListCourse", otherTeacherResponse.Headers.Location?.OriginalString);
+        Assert.Equal("/teacher-course", otherTeacherResponse.Headers.Location?.OriginalString);
     }
 }
