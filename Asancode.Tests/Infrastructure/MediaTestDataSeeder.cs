@@ -10,7 +10,8 @@ namespace Asancode.Tests.Infrastructure;
 public sealed record MediaTeacherCourseScenario(
     string OwnerUserName,
     string OtherTeacherUserName,
-    int CourseId);
+    int CourseId,
+    int OtherTeacherCourseId);
 
 public static class MediaTestDataSeeder
 {
@@ -98,32 +99,62 @@ public static class MediaTestDataSeeder
         dbContext.Plans.Add(plan);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var course = new Course
+        var ownerCourse = CreateCourse(
+            uniqueKey,
+            courseGroup.GroupId,
+            owner.UserId,
+            courseStatus.StatusId,
+            plan.PlanId,
+            courseLevel.LevelId,
+            $"Media test owner course {uniqueKey}",
+            uniqueKey[..5]);
+
+        var otherTeacherCourse = CreateCourse(
+            uniqueKey,
+            courseGroup.GroupId,
+            otherTeacher.UserId,
+            courseStatus.StatusId,
+            plan.PlanId,
+            courseLevel.LevelId,
+            $"Media test other teacher course {uniqueKey}",
+            uniqueKey[5..10]);
+
+        dbContext.Course.AddRange(ownerCourse, otherTeacherCourse);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new MediaTeacherCourseScenario(
+            owner.UserName,
+            otherTeacher.UserName,
+            ownerCourse.CourseId,
+            otherTeacherCourse.CourseId);
+    }
+
+    private static Course CreateCourse(
+        string uniqueKey,
+        int groupId,
+        int teacherId,
+        int statusId,
+        int planId,
+        int levelId,
+        string title,
+        string shortKey) =>
+        new()
         {
-            GroupId = courseGroup.GroupId,
-            TeacherId = owner.UserId,
-            StatusId = courseStatus.StatusId,
-            PlanId = plan.PlanId,
-            LevelId = courseLevel.LevelId,
-            CourseTitle = $"Media test course {uniqueKey}",
+            GroupId = groupId,
+            TeacherId = teacherId,
+            StatusId = statusId,
+            PlanId = planId,
+            LevelId = levelId,
+            CourseTitle = title,
             CourseDescription = "Test-only course",
             CoursePrice = 100,
-            ShortKey = uniqueKey[..5],
+            ShortKey = shortKey,
             Tags = "media,test",
             CourseImageName = "media-test.jpg",
             DemoFileName = "media-test.mp4",
             CreateDate = DateTime.UtcNow,
             IsDelete = false
         };
-
-        dbContext.Course.Add(course);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return new MediaTeacherCourseScenario(
-            owner.UserName,
-            otherTeacher.UserName,
-            course.CourseId);
-    }
 
     private static Users CreateUser(string userName) =>
         new()

@@ -40,6 +40,8 @@ if (maxMediaArchiveBytes <= 0)
     throw new InvalidOperationException("Media upload size limit must be greater than zero.");
 }
 
+var maxMediaMultipartBytes = checked(maxMediaArchiveBytes + 64 * 1024);
+
 builder.Services
     .AddOptions<MediaUploadOptions>()
     .Bind(builder.Configuration.GetSection(MediaUploadOptions.SectionName))
@@ -88,7 +90,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
-    options.MultipartBodyLengthLimit = maxMediaArchiveBytes;
+    options.MultipartBodyLengthLimit = maxMediaMultipartBytes;
 });
 
 #endregion
@@ -124,7 +126,7 @@ app.Use(async (context, next) =>
         var requestSizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
         if (requestSizeFeature is { IsReadOnly: false })
         {
-            requestSizeFeature.MaxRequestBodySize = checked(maxMediaArchiveBytes + 64 * 1024);
+            requestSizeFeature.MaxRequestBodySize = maxMediaMultipartBytes;
         }
     }
 

@@ -29,8 +29,6 @@ public sealed class MediaTestApplicationFactory(string connectionString)
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddTransient<IStartupFilter, MediaTestAntiforgeryStartupFilter>();
-
             services
                 .AddAuthentication(options =>
                 {

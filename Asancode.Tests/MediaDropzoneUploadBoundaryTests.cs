@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Asancode.Tests.Infrastructure;
 using DataLayer.Context;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,7 +39,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     {
         var scenario = await SeedScenarioAsync();
         using var client = CreateAuthenticatedClient(scenario.OtherTeacherUserName);
-        await AddAntiforgeryHeaderAsync(client);
+        await AddAntiforgeryHeaderAsync(client, scenario.OtherTeacherCourseId);
 
         using var form = CreateArchiveForm();
         using var response = await client.PostAsync(
@@ -96,7 +97,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     {
         var scenario = await SeedScenarioAsync();
         using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
-        await AddAntiforgeryHeaderAsync(client);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
 
         using var form = CreateArchiveForm();
         using var response = await client.PostAsync(
@@ -127,7 +128,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     {
         var scenario = await SeedScenarioAsync();
         using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
-        await AddAntiforgeryHeaderAsync(client);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
 
         using var form = CreateArchiveForm(new byte[2049]);
         using var response = await client.PostAsync(
@@ -150,7 +151,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     {
         var scenario = await SeedScenarioAsync();
         using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
-        await AddAntiforgeryHeaderAsync(client);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
 
         using var form = CreateArchiveForm(fileName: "episode.exe");
         using var response = await client.PostAsync(
@@ -166,7 +167,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     {
         var scenario = await SeedScenarioAsync();
         using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
-        await AddAntiforgeryHeaderAsync(client);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
 
         using var form = CreateArchiveForm();
         using var response = await client.PostAsync(
@@ -203,22 +204,37 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         return client;
     }
 
-    private static async Task AddAntiforgeryHeaderAsync(HttpClient client)
+    private static async Task AddAntiforgeryHeaderAsync(HttpClient client, int tokenCourseId)
     {
-        using var response = await client.GetAsync(
-            "/__test/antiforgery",
+        // Generate a token from the real authenticated Teacher page so it is
+        // bound to the same claims principal that posts the upload.
+        using var pageResponse = await client.GetAsync(
+            $"/add-eppisode/{tokenCourseId}",
             TestContext.Current.CancellationToken);
-        response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
 
-        using var payload = await JsonDocument.ParseAsync(
-            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
-            cancellationToken: TestContext.Current.CancellationToken);
+        var html = await pageResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
 
-        var requestToken = payload.RootElement.GetProperty("requestToken").GetString();
-        Assert.False(string.IsNullOrWhiteSpace(requestToken));
+        var tokenInput = Regex.Matches(html, "<input\\b[^>]*>", RegexOptions.IgnoreCase)
+            .Select(match => match.Value)
+            .FirstOrDefault(tag => Regex.IsMatch(
+                tag,
+                "\\bname\\s*=\\s*[\"']__RequestVerificationToken[\"']",
+                RegexOptions.IgnoreCase));
+
+        Assert.False(string.IsNullOrWhiteSpace(tokenInput));
+
+        var tokenMatch = Regex.Match(
+            tokenInput!,
+            "\\bvalue\\s*=\\s*[\"'](?<token>[^\"']+)[\"']",
+            RegexOptions.IgnoreCase);
+        Assert.True(tokenMatch.Success);
 
         client.DefaultRequestHeaders.Remove("RequestVerificationToken");
-        client.DefaultRequestHeaders.Add("RequestVerificationToken", requestToken);
+        client.DefaultRequestHeaders.Add(
+            "RequestVerificationToken",
+            tokenMatch.Groups["token"].Value);
     }
 
     private static MultipartFormDataContent CreateArchiveForm(
