@@ -52,10 +52,10 @@ namespace Core.Services
                     BlogImageName.CopyTo(stream);
                 }
                 //resize
-                ImageConvertor imagResizer = new ImageConvertor();
+                var imageResizer = new ImageConvertor();
                 string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/Thumnail",
                     blog.BlogImageName);
-                imagResizer.Image_resize(mainImagepath, thumPath, 500);
+                imageResizer.Resize(mainImagepath, thumPath, 500);
                 //add
             }
             blog.Date = DateTime.Now;
@@ -103,8 +103,8 @@ namespace Core.Services
                     }
                     //resize
                     string thumPathImage = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/Thumnail", blog.BlogImageName);
-                    ImageConvertor imgresizer = new ImageConvertor();
-                    imgresizer.Image_resize(mainPath, thumPathImage, 400);
+                    var imageResizer = new ImageConvertor();
+                    imageResizer.Resize(mainPath, thumPathImage, 400);
                 }
             }
             blog.Date = DateTime.Now;

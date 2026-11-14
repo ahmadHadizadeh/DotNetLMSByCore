@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Facebook" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.15" />
+
+    <PackageVersion Include="HtmlSanitizer" Version="9.0.892" />
+    <PackageVersion Include="Magick.NET-Q8-AnyCPU" Version="15.1.0" />
+    <PackageVersion Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageVersion Include="SharpCompress" Version="0.50.9" />
+    <PackageVersion Include="ZarinpalSandbox" Version="2.0.4" />
+  </ItemGroup>
+</Project>

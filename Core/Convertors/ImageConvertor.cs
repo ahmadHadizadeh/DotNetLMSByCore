@@ -1,109 +1,49 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+using System;
 using System.IO;
-using System.Linq;
+using ImageMagick;
 
 namespace Core.Convertors
 {
     public class ImageConvertor
     {
-        public void Image_resize(string input_Image_Path, string output_Image_Path, int new_Width)
+        public void Resize(string inputImagePath, string outputImagePath, int newWidth)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(inputImagePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputImagePath);
 
-            const long quality = 50L;
-
-            Bitmap sourceBitmap = new Bitmap(input_Image_Path);
-
-
-
-            double dblWidth_origial = sourceBitmap.Width;
-
-            double dblHeigth_origial = sourceBitmap.Height;
-
-            double relation_heigth_width = dblHeigth_origial / dblWidth_origial;
-
-            int new_Height = (int)(new_Width * relation_heigth_width);
-
-
-
-            //< create Empty Drawarea >
-
-            var new_DrawArea = new Bitmap(new_Width, new_Height);
-
-            //</ create Empty Drawarea >
-
-
-
-            using (var graphic_of_DrawArea = Graphics.FromImage(new_DrawArea))
-
+            if (newWidth <= 0)
             {
-
-                //< setup >
-
-                graphic_of_DrawArea.CompositingQuality = CompositingQuality.HighSpeed;
-
-                graphic_of_DrawArea.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
-                graphic_of_DrawArea.CompositingMode = CompositingMode.SourceCopy;
-
-                //</ setup >
-
-
-
-                //< draw into placeholder >
-
-                //*imports the image into the drawarea
-
-                graphic_of_DrawArea.DrawImage(sourceBitmap, 0, 0, new_Width, new_Height);
-
-                //</ draw into placeholder >
-
-
-
-                //--< Output as .Jpg >--
-
-                using (var output = System.IO.File.Open(output_Image_Path, FileMode.Create))
-
-                {
-
-                    //< setup jpg >
-
-                    var qualityParamId = System.Drawing.Imaging.Encoder.Quality;
-
-                    var encoderParameters = new EncoderParameters(1);
-
-                    encoderParameters.Param[0] = new EncoderParameter(qualityParamId, quality);
-
-                    //</ setup jpg >
-
-
-
-                    //< save Bitmap as Jpg >
-
-                    var codec = ImageCodecInfo.GetImageDecoders().FirstOrDefault(c => c.FormatID == ImageFormat.Jpeg.Guid);
-
-                    new_DrawArea.Save(output, codec, encoderParameters);
-
-                    //resized_Bitmap.Dispose ();
-
-                    output.Close();
-
-                    //</ save Bitmap as Jpg >
-
-                }
-
-                //--</ Output as .Jpg >--
-
-                graphic_of_DrawArea.Dispose();
-
+                throw new ArgumentOutOfRangeException(nameof(newWidth), "Image width must be greater than zero.");
             }
 
-            sourceBitmap.Dispose();
+            if (!File.Exists(inputImagePath))
+            {
+                throw new FileNotFoundException("The source image was not found.", inputImagePath);
+            }
 
-            //---------------</ Image_resize() >---------------
+            using var image = new MagickImage(inputImagePath);
 
+            if (image.Width == 0 || image.Height == 0)
+            {
+                throw new InvalidDataException("The source image has invalid dimensions.");
+            }
+
+            // Respect EXIF orientation before calculating the resized output.
+            image.AutoOrient();
+
+            // A zero height preserves the original aspect ratio.
+            image.Resize((uint)newWidth, 0);
+
+            // Keep the output encoding consistent with the filename extension.
+            // JPEG thumbnails retain the previous quality setting.
+            var extension = Path.GetExtension(outputImagePath);
+            if (string.Equals(extension, ".jpg", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(extension, ".jpeg", StringComparison.OrdinalIgnoreCase))
+            {
+                image.Quality = 50;
+            }
+
+            image.Write(outputImagePath);
         }
-
     }
 }

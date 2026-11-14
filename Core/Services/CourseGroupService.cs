@@ -116,10 +116,10 @@ namespace Core.Services
                     courseImage.CopyTo(stream);
                 }
                 //image resaiz
-                ImageConvertor imgResizer = new ImageConvertor();
+                var imageResizer = new ImageConvertor();
                 string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
 
-                imgResizer.Image_resize(imagePath, thumPath, 500);
+                imageResizer.Resize(imagePath, thumPath, 500);
 
                 if (Demo != null)
                 {
@@ -196,10 +196,10 @@ namespace Core.Services
                     courseImage.CopyTo(stream);
                 }
                 //image resaiz
-                ImageConvertor imgResizer = new ImageConvertor();
+                var imageResizer = new ImageConvertor();
                 string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
 
-                imgResizer.Image_resize(imagePath, thumPath, 600);
+                imageResizer.Resize(imagePath, thumPath, 600);
 
                 if (Demo != null)
                 {
@@ -633,10 +633,10 @@ namespace Core.Services
                     bannerImage.CopyTo(stream);
                 }
                 //image resaiz
-                //ImageConvertor imgResizer = new ImageConvertor();
+                //var imageResizer = new ImageConvertor();
                 //string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
 
-                //imgResizer.Image_resize(imagePath, thumPath, 500);
+                //imageResizer.Resize(imagePath, thumPath, 500);
             }
             _context.Add(banner);
             _context.SaveChanges();
