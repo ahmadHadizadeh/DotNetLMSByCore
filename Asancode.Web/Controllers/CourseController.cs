@@ -90,13 +90,18 @@ namespace Asancode.Web.Controllers
 
                     string rarPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode",
                         ep.EpisodeFileName);
-                    var archive = ArchiveFactory.Open(rarPath);
-                    var Entries = archive.Entries.OrderBy(x => x.Key.Length);
-                    foreach (var en in Entries)
+                    using var archive = ArchiveFactory.OpenArchive(rarPath);
+                    var entries = archive.Entries.OrderBy(x => x.Key.Length);
+                    foreach (var entry in entries)
                     {
-                        if (Path.GetExtension(en.Key) == ".mp4")
+                        if (Path.GetExtension(entry.Key) == ".mp4")
                         {
-                            en.WriteTo(System.IO.File.Create(Path.Combine(targetPath, ep.EpisodeFileName.Replace(".zip", ".mp4"))));
+                            string outputPath = Path.Combine(
+                                targetPath,
+                                ep.EpisodeFileName.Replace(".zip", ".mp4"));
+
+                            using var outputStream = System.IO.File.Create(outputPath);
+                            entry.WriteTo(outputStream);
                         }
                     }
                 }
