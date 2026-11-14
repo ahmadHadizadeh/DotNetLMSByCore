@@ -1,0 +1,26 @@
+using Asancode.Tests.Infrastructure;
+using DataLayer.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+
+namespace Asancode.Tests;
+
+public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixture)
+    : IClassFixture<MediaSqlServerFixture>
+{
+    [Fact]
+    public async Task Test_host_uses_sql_server_and_applies_project_migrations()
+    {
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+
+        Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", dbContext.Database.ProviderName);
+        Assert.True(await dbContext.Database.CanConnectAsync());
+        Assert.Contains(
+            "20260218105211_mig1_FirstDb",
+            await dbContext.Database.GetAppliedMigrationsAsync());
+
+        Assert.Equal(0, await dbContext.CourseEpisode.CountAsync());
+    }
+}
