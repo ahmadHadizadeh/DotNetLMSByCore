@@ -133,7 +133,7 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
 
             if (!Request.HasFormContentType)
             {
-                return UnsupportedMediaType();
+                return StatusCode(StatusCodes.Status415UnsupportedMediaType);
             }
 
             // The antiforgery filter validates the request header before the action runs.
