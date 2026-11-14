@@ -129,6 +129,47 @@ public static class MediaTestDataSeeder
             otherTeacherCourse.CourseId);
     }
 
+    public static async Task<string> SeedAdminUserAsync(
+        AsanwebContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var permissionIds = await dbContext.Permission
+            .Where(permission => permission.PermissionId == 1 || permission.PermissionId == 2)
+            .Select(permission => permission.PermissionId)
+            .ToListAsync(cancellationToken);
+
+        if (!permissionIds.Contains(1) || !permissionIds.Contains(2))
+        {
+            throw new InvalidOperationException(
+                "The test database must contain Permission IDs 1 and 2 before seeding an Admin.");
+        }
+
+        var uniqueKey = Guid.NewGuid().ToString("N");
+        var admin = CreateUser($"admin-{uniqueKey}");
+        var adminRole = new Roles
+        {
+            RolesTitles = $"Media test admin {uniqueKey}",
+            IsDelete = false
+        };
+
+        dbContext.Users.Add(admin);
+        dbContext.Roles.Add(adminRole);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        dbContext.UsersRoles.Add(new UsersRole
+        {
+            UserId = admin.UserId,
+            RoleId = adminRole.RoleId
+        });
+
+        dbContext.RolePermission.AddRange(
+            new RolePermission { RoleId = adminRole.RoleId, PermissionId = 1 },
+            new RolePermission { RoleId = adminRole.RoleId, PermissionId = 2 });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return admin.UserName;
+    }
+
     private static Course CreateCourse(
         string uniqueKey,
         int groupId,
