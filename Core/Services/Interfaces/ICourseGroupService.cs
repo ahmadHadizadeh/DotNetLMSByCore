@@ -50,7 +50,7 @@ namespace Core.Services.Interfaces
 
         CourseEpisode GetEpisodeById(int episodeid);
 
-        void EditEpisode(CourseEpisode episode, IFormFile episodefile);
+        void EditEpisode(CourseEpisode episode, IFormFile? episodefile);
 
         Tuple<List<ShowCourseItemViewModel>, int> GetCourse(int pageId = 1, int take = 0, string filter = "",
             string typeShow = "all", string orderBy = "date",

@@ -392,6 +392,7 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
         var episode = await dbContext.CourseEpisode.IgnoreQueryFilters().SingleOrDefaultAsync(
             item => item.CourseId == courseId && item.EpisodeTitle == title,
             TestContext.Current.CancellationToken);
+        var storedFileName = episode?.EpisodeFileName;
 
         if (episode is not null)
         {
@@ -399,6 +400,12 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
+        if (!string.IsNullOrWhiteSpace(storedFileName))
+        {
+            DeleteFileWithinRepository(GetEpisodeFilePath(storedFileName));
+        }
+
+        // Also remove the client-named path in case the legacy implementation wrote it.
         DeleteFileWithinRepository(GetEpisodeFilePath(fileName));
     }
 
@@ -409,11 +416,17 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
         var episode = await dbContext.CourseEpisode.IgnoreQueryFilters().SingleOrDefaultAsync(
             item => item.EpisodeId == episodeId,
             TestContext.Current.CancellationToken);
+        var storedFileName = episode?.EpisodeFileName;
 
         if (episode is not null)
         {
             dbContext.CourseEpisode.Remove(episode);
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(storedFileName))
+        {
+            DeleteFileWithinRepository(GetEpisodeFilePath(storedFileName));
         }
 
         DeleteFileWithinRepository(filePath);

@@ -121,13 +121,22 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Give the Teacher upload endpoint its configured request-body limit,
-// including a bounded allowance for multipart headers and boundaries.
+// Apply the archive request-body limit only to Media upload endpoints.
+// The allowance covers multipart boundaries and form headers.
 app.Use(async (context, next) =>
 {
-    if (context.Request.Path.Equals(
-            "/UserPanel/Teacher/DropzoneTarget",
-            StringComparison.OrdinalIgnoreCase))
+    var path = context.Request.Path;
+    var isTeacherUpload = path.Equals(
+        "/UserPanel/Teacher/DropzoneTarget",
+        StringComparison.OrdinalIgnoreCase);
+    var isAdminCreateUpload = path.StartsWithSegments(
+        "/Admin/Course/CreateEpisode",
+        StringComparison.OrdinalIgnoreCase);
+    var isAdminEditUpload = path.StartsWithSegments(
+        "/Admin/Course/EditEpisode",
+        StringComparison.OrdinalIgnoreCase);
+
+    if (isTeacherUpload || isAdminCreateUpload || isAdminEditUpload)
     {
         var requestSizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
         if (requestSizeFeature is { IsReadOnly: false })

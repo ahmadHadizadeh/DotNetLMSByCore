@@ -226,22 +226,31 @@ namespace Core.Services
 
         public int AddCourseEpisode(CourseEpisode episode, IFormFile episodeFile)
         {
-            episode.EpisodeFileName = episodeFile.FileName;
-            string episodeFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode", episode.EpisodeFileName);
-            using (var stream = new FileStream(episodeFilePath, FileMode.Create))
+            if (episodeFile.Length <= 0)
             {
-                episodeFile.CopyTo(stream);
+                throw new ArgumentException("Episode archive must not be empty.", nameof(episodeFile));
             }
 
-            _context.CourseEpisode.Add(episode);
-            _context.SaveChanges();
-            return episode.EpisodeId;
+            var storedFileName = SaveEpisodeArchive(episodeFile);
+            episode.EpisodeFileName = storedFileName;
+
+            try
+            {
+                _context.CourseEpisode.Add(episode);
+                _context.SaveChanges();
+                return episode.EpisodeId;
+            }
+            catch
+            {
+                DeleteEpisodeArchiveIfSafe(storedFileName);
+                throw;
+            }
         }
 
         public bool IsExistFile(string fileName)
         {
-            string episodPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode", fileName);
-            return File.Exists(episodPath);
+            var path = GetSafeEpisodeArchivePath(fileName);
+            return path is not null && File.Exists(path);
         }
 
         public CourseEpisode GetEpisodeById(int episodeid)
@@ -249,23 +258,97 @@ namespace Core.Services
             return _context.CourseEpisode.Find(episodeid);
         }
 
-        public void EditEpisode(CourseEpisode episode, IFormFile episodefile)
+        public void EditEpisode(CourseEpisode episode, IFormFile? episodefile)
         {
-            // check file delete
-            if (episodefile != null)
+            var existingEpisode = _context.CourseEpisode.SingleOrDefault(
+                item => item.EpisodeId == episode.EpisodeId);
+
+            if (existingEpisode is null)
             {
-                string deletePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode", episode.EpisodeFileName);
-                File.Delete(deletePath);
+                throw new InvalidOperationException(
+                    $"Course episode {episode.EpisodeId} was not found.");
             }
-            // insert file
-            episode.EpisodeFileName = episodefile.FileName;
-            string pathFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode", episode.EpisodeFileName);
-            using (var stream = new FileStream(pathFile, FileMode.Create))
+
+            existingEpisode.EpisodeTitle = episode.EpisodeTitle;
+            existingEpisode.EpisodeTime = episode.EpisodeTime;
+            existingEpisode.IsFree = episode.IsFree;
+
+            if (episodefile is null)
             {
-                episodefile.CopyTo(stream);
+                _context.SaveChanges();
+                return;
             }
-            _context.CourseEpisode.Update(episode);
-            _context.SaveChanges();
+
+            if (episodefile.Length <= 0)
+            {
+                throw new ArgumentException("Episode archive must not be empty.", nameof(episodefile));
+            }
+
+            var oldFileName = existingEpisode.EpisodeFileName;
+            var newFileName = SaveEpisodeArchive(episodefile);
+            existingEpisode.EpisodeFileName = newFileName;
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch
+            {
+                DeleteEpisodeArchiveIfSafe(newFileName);
+                throw;
+            }
+
+            DeleteEpisodeArchiveIfSafe(oldFileName);
+        }
+
+        private static string SaveEpisodeArchive(IFormFile episodeFile)
+        {
+            var extension = Path.GetExtension(episodeFile.FileName).ToLowerInvariant();
+            var storedFileName = $"{Guid.NewGuid():N}{extension}";
+            var directory = GetEpisodeArchiveDirectory();
+            Directory.CreateDirectory(directory);
+
+            var path = Path.Combine(directory, storedFileName);
+            try
+            {
+                using var stream = new FileStream(
+                    path,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None);
+                episodeFile.CopyTo(stream);
+                return storedFileName;
+            }
+            catch
+            {
+                DeleteEpisodeArchiveIfSafe(storedFileName);
+                throw;
+            }
+        }
+
+        private static string GetEpisodeArchiveDirectory() =>
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Episode");
+
+        private static string? GetSafeEpisodeArchivePath(string? fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName) ||
+                Path.IsPathRooted(fileName) ||
+                fileName.IndexOfAny(new[] { '/', '\\\\' }) >= 0 ||
+                !string.Equals(fileName, Path.GetFileName(fileName), StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            return Path.Combine(GetEpisodeArchiveDirectory(), fileName);
+        }
+
+        private static void DeleteEpisodeArchiveIfSafe(string? fileName)
+        {
+            var path = GetSafeEpisodeArchivePath(fileName);
+            if (path is not null && File.Exists(path))
+            {
+                File.Delete(path);
+            }
         }
 
         public Tuple<List<ShowCourseItemViewModel>, int> GetCourse(int pageId = 1, int take = 0, string filter = "", string typeShow = "all", string orderBy = "date",

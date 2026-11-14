@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Asancode.Web.Options;
+using Asancode.Web.Media;
 
 namespace Asancode.Web.Areas.UserPanel.Controllers
 {
@@ -147,21 +148,15 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             }
 
             var file = files[0];
-            if (file.Length == 0)
+            if (!MediaArchiveUploadValidator.TryValidate(
+                    file,
+                    _mediaUploadOptions.MaxArchiveBytes,
+                    out var failureStatusCode))
             {
-                return BadRequest(new { error = "The uploaded archive is empty." });
-            }
-
-            if (file.Length > _mediaUploadOptions.MaxArchiveBytes)
-            {
-                return StatusCode(StatusCodes.Status413PayloadTooLarge);
+                return StatusCode(failureStatusCode);
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (extension is not ".zip" and not ".rar")
-            {
-                return BadRequest(new { error = "Only ZIP and RAR archives are accepted." });
-            }
 
             // This is the legacy staging location. The private MediaAsset storage
             // pipeline will replace it in the next implementation phase.
