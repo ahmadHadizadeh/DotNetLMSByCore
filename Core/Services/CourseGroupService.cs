@@ -333,7 +333,7 @@ namespace Core.Services
         {
             if (string.IsNullOrWhiteSpace(fileName) ||
                 Path.IsPathRooted(fileName) ||
-                fileName.IndexOfAny(new[] { '/', '\\\\' }) >= 0 ||
+                fileName.IndexOfAny(new[] { '/', '\\' }) >= 0 ||
                 !string.Equals(fileName, Path.GetFileName(fileName), StringComparison.Ordinal))
             {
                 return null;
