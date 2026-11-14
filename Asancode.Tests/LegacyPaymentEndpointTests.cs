@@ -16,7 +16,7 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                // The payment endpoint under test must not open a database connection.
+                // The endpoint under test must not open a database connection.
                 ["ConnectionStrings:AsanCodeConnection"] =
                     "Server=localhost;Database=Asancode_IntegrationTests;User Id=test_user;Password=NotARealCredential!;TrustServerCertificate=True;Encrypt=False;",
                 ["Authentication:Google:ClientId"] = "integration-test-client",
@@ -42,7 +42,9 @@ public sealed class LegacyPaymentEndpointTests(TestApplicationFactory factory)
     [InlineData("/OnlinePayment/271?Status=NOK")]
     public async Task Legacy_payment_endpoint_stays_disabled_and_uncacheable(string requestPath)
     {
-        using var response = await _client.GetAsync(requestPath);
+        using var response = await _client.GetAsync(
+            requestPath,
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         Assert.True(response.Headers.CacheControl?.NoStore);
