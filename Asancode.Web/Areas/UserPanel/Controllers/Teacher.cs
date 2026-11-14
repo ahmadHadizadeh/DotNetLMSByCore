@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,27 +10,34 @@ using Core.Services.Interfaces;
 using DataLayer.Entities.Course;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using Asancode.Web.Options;
 
 namespace Asancode.Web.Areas.UserPanel.Controllers
 {
     [Area("UserPanel")]
     [Authorize]
-    [PermissionChecker(2 )]
+    [PermissionChecker(2)]
     public class Teacher : Controller
     {
-        private ICourseGroupService _courseService;
-        private IUserService _userService;
+        private readonly ICourseGroupService _courseService;
+        private readonly IUserService _userService;
+        private readonly MediaUploadOptions _mediaUploadOptions;
 
-        public Teacher(ICourseGroupService courseService, IUserService userService)
+        public Teacher(
+            ICourseGroupService courseService,
+            IUserService userService,
+            IOptions<MediaUploadOptions> mediaUploadOptions)
         {
             _courseService = courseService;
             _userService = userService;
+            _mediaUploadOptions = mediaUploadOptions.Value;
         }
+
         [HttpGet("teacher-course")]
         public IActionResult TeacherListCourse()
         {
             var course = _courseService.GetAllCourseTeacher(User.Identity.Name);
-            
             return View(course);
         }
 
@@ -38,7 +45,7 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
         public IActionResult EpisodeLIst(int courseId)
         {
             var course = _courseService.GetCourseByCourseId(courseId);
-            if (course==null)
+            if (course == null)
             {
                 return NotFound();
             }
@@ -51,7 +58,6 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
 
             ViewBag.courseid = courseId;
             var episode = _courseService.GetEpisodeByCourseId(courseId);
-           
             return View(episode);
         }
 
@@ -59,14 +65,12 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
         public IActionResult AddEpisode(int courseId)
         {
             var course = _courseService.GetCourseByCourseId(courseId);
-
             if (course == null)
             {
                 return NotFound();
             }
 
             var userId = _userService.GetUserIdByUsername(User.Identity.Name);
-
             if (course.TeacherId != userId)
             {
                 return RedirectToAction("TeacherListCourse", "Teacher");
@@ -79,8 +83,8 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             };
 
             return View(result);
-            
         }
+
         [HttpPost("add-eppisode/{courseId}")]
         public IActionResult AddEpisode(AddEpisodeTeacherViewModel episode)
         {
@@ -95,7 +99,6 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             }
 
             var result = _courseService.AddEpisode(episode, User.Identity.Name);
-
             if (result)
             {
                 return RedirectToAction("TeacherListCourse", "Teacher", new { courseId = episode.CourseId });
@@ -103,34 +106,72 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
 
             return View(episode);
         }
-        public IActionResult DropzoneTarget(List<IFormFile> files, int courseId)
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> DropzoneTarget(
+            [FromForm] List<IFormFile> files,
+            [FromQuery] int courseId)
         {
-            if (files != null && files.Any())
+            var userName = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(userName))
             {
-                foreach (var file in files)
-                {
-                    var fileName = $"{courseId}-{Guid.NewGuid().ToString()}" + Path.GetExtension(file.FileName);
-
-                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode/");
-
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    var finalPath = path + fileName;
-
-                    using (var stream = new FileStream(finalPath, FileMode.Create))
-                    {
-                        file.CopyTo(stream);
-                    }
-
-                    return new JsonResult(new { data = fileName, status = "Success" });
-                }
+                return Unauthorized();
             }
 
-            return new JsonResult(new { status = "Error" });
-        }
+            var course = _courseService.GetCourseByCourseId(courseId);
+            if (course == null)
+            {
+                return NotFound();
+            }
 
+            var userId = _userService.GetUserIdByUsername(userName);
+            if (course.TeacherId != userId)
+            {
+                return Forbid();
+            }
+
+            if (files == null || files.Count != 1)
+            {
+                return BadRequest(new { error = "Exactly one archive file is required." });
+            }
+
+            var file = files[0];
+            if (file.Length == 0 || file.Length > _mediaUploadOptions.MaxArchiveBytes)
+            {
+                return StatusCode(StatusCodes.Status413PayloadTooLarge);
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (extension is not ".zip" and not ".rar")
+            {
+                return BadRequest(new { error = "Only ZIP and RAR archives are accepted." });
+            }
+
+            // This is the legacy staging location. The private MediaAsset storage
+            // pipeline will replace it in the next implementation phase.
+            var fileName = $"{courseId}-{Guid.NewGuid():N}{extension}";
+            var episodeDirectory = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "Episode");
+
+            Directory.CreateDirectory(episodeDirectory);
+
+            var finalPath = Path.Combine(episodeDirectory, fileName);
+            await using (var stream = new FileStream(
+                             finalPath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             bufferSize: 81920,
+                             useAsync: true))
+            {
+                await file.CopyToAsync(stream, HttpContext.RequestAborted);
+            }
+
+            return new JsonResult(new { data = fileName, status = "Success" });
+        }
     }
 }

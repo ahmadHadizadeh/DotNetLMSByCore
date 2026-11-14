@@ -33,7 +33,6 @@
                                         <input  type="text" class="form-control  ps-5" asp-for="EpisodeTime" placeholder="0 0 : 0 0: 0 0">
                                     </div>
                                     <span class="text-danger" asp-validation-for="EpisodeTime"></span>
-
                                 </div>
                             </div>
                             <div class="form-group">
@@ -56,7 +55,7 @@
                         </div>
                         <div class="row m-4 justify-content-end">
                             <div class="col-12 text-center">
-                                    <button id="SubmitBtn" class="btn btn-success"> ثبت قسمت جدید </button>
+                                <button id="SubmitBtn" class="btn btn-success"> ثبت قسمت جدید </button>
                             </div>
                         </div>
                     </form>
@@ -75,12 +74,15 @@
 
         Dropzone.options.myDropzone = {
             url: $("#my-dropzone").attr("data-url"),
-            parallelUploads: 1, // How Many Files process in parallel
-            uploadMultiple: true, // Add Multiple To fallback input - Cant Use With chunking
-            maxFilesize: 100000000, // In byte - 100000000 is 100 mb
-            paramName: DropzoneParameterName, // if uploadMultiple is true set as true for add [] in name
-            maxFiles: 1, // If not null defines how many files this Dropzone handles. If it exceeds, the event maxfilesexceeded will be called.
-            acceptedFiles: '.rar, .zip', // default is null - This is a comma separated list of mime types or file extensions [image/*,application/pdf,.psd]
+            headers: {
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ""
+            },
+            parallelUploads: 1,
+            uploadMultiple: true,
+            maxFilesize: 100,
+            paramName: DropzoneParameterName,
+            maxFiles: 1,
+            acceptedFiles: '.rar,.zip',
             init: function () {
                 this.on("errormultiple",
                     function (file, message) {
@@ -110,4 +112,3 @@
         }
     </script>
 }
-

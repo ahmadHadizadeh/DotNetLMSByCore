@@ -109,12 +109,10 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             using var payload = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(),
+                await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
                 cancellationToken: TestContext.Current.CancellationToken);
 
-            Assert.Equal(
-                "Success",
-                payload.RootElement.GetProperty("status").GetString());
+            Assert.Equal("Success", payload.RootElement.GetProperty("status").GetString());
             Assert.False(string.IsNullOrWhiteSpace(
                 payload.RootElement.GetProperty("data").GetString()));
         }
@@ -122,6 +120,61 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         {
             await DeleteLegacyUploadIfCreatedAsync(response);
         }
+    }
+
+    [Fact]
+    public async Task Upload_endpoint_rejects_files_larger_than_the_configured_archive_limit()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client);
+
+        using var form = CreateArchiveForm(new byte[2049]);
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId={scenario.CourseId}",
+            form,
+            TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteLegacyUploadIfCreatedAsync(response);
+        }
+    }
+
+    [Fact]
+    public async Task Upload_endpoint_rejects_file_extensions_outside_the_archive_allowlist()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client);
+
+        using var form = CreateArchiveForm(fileName: "episode.exe");
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId={scenario.CourseId}",
+            form,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Upload_endpoint_rejects_missing_course()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client);
+
+        using var form = CreateArchiveForm();
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId=2147483000",
+            form,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private async Task<MediaTeacherCourseScenario> SeedScenarioAsync()
@@ -158,7 +211,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         response.EnsureSuccessStatusCode();
 
         using var payload = await JsonDocument.ParseAsync(
-            await response.Content.ReadAsStreamAsync(),
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
             cancellationToken: TestContext.Current.CancellationToken);
 
         var requestToken = payload.RootElement.GetProperty("requestToken").GetString();
@@ -168,7 +221,20 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         client.DefaultRequestHeaders.Add("RequestVerificationToken", requestToken);
     }
 
-    private static MultipartFormDataContent CreateArchiveForm()
+    private static MultipartFormDataContent CreateArchiveForm(
+        byte[]? fileBytes = null,
+        string fileName = "episode.zip")
+    {
+        fileBytes ??= CreateValidTestZipArchive();
+
+        var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+        form.Add(fileContent, "files", fileName);
+        return form;
+    }
+
+    private static byte[] CreateValidTestZipArchive()
     {
         using var archiveBytes = new MemoryStream();
 
@@ -188,11 +254,7 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
             });
         }
 
-        var form = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent(archiveBytes.ToArray());
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-        form.Add(fileContent, "files", "episode.zip");
-        return form;
+        return archiveBytes.ToArray();
     }
 
     private static async Task DeleteLegacyUploadIfCreatedAsync(HttpResponseMessage response)
@@ -200,7 +262,8 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
         try
         {
             using var payload = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync());
+                await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+                cancellationToken: TestContext.Current.CancellationToken);
 
             if (!payload.RootElement.TryGetProperty("status", out var status) ||
                 status.GetString() != "Success" ||

@@ -1,5 +1,6 @@
 using AngleSharp;
 using Asancode.Web.ExterNalProvider;
+using Asancode.Web.Options;
 using Core.Convertors;
 using Core.Services;
 using Core.Services.Interfaces;
@@ -28,6 +29,23 @@ builder.Services.AddTransient<ICourseGroupService, CourseGroupService>();
 builder.Services.AddTransient<IBlogService, BlogService>();
 builder.Services.AddTransient<IOrderService, OrderService>();
 builder.Services.AddTransient<IForumService, ForumService>();
+
+// Media upload limits
+var maxMediaArchiveBytes = builder.Configuration.GetValue<long?>(
+    $"{MediaUploadOptions.SectionName}:MaxArchiveBytes")
+    ?? MediaUploadOptions.DefaultMaxArchiveBytes;
+
+if (maxMediaArchiveBytes <= 0)
+{
+    throw new InvalidOperationException("Media upload size limit must be greater than zero.");
+}
+
+builder.Services
+    .AddOptions<MediaUploadOptions>()
+    .Bind(builder.Configuration.GetSection(MediaUploadOptions.SectionName))
+    .Validate(options => options.MaxArchiveBytes > 0,
+        "Media upload size limit must be greater than zero.")
+    .ValidateOnStart();
 
 // DbContext
 builder.Services.AddDbContext<AsanwebContext>(options =>
@@ -70,7 +88,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
-    options.MultipartBodyLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = maxMediaArchiveBytes;
 });
 
 #endregion
@@ -94,6 +112,24 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error404");
     app.UseHsts();
 }
+
+// Give the Teacher upload endpoint its configured request-body limit,
+// including a bounded allowance for multipart headers and boundaries.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals(
+            "/UserPanel/Teacher/DropzoneTarget",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        var requestSizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (requestSizeFeature is { IsReadOnly: false })
+        {
+            requestSizeFeature.MaxRequestBodySize = checked(maxMediaArchiveBytes + 64 * 1024);
+        }
+    }
+
+    await next();
+});
 
 app.UseStaticFiles();
 app.UseRouting();

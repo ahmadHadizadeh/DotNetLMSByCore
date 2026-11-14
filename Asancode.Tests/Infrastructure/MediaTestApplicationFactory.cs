@@ -22,7 +22,8 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 ["Authentication:Google:ClientId"] = "integration-test-client",
                 ["Authentication:Google:ClientSecret"] = "integration-test-secret",
                 ["Authentication:Facebook:AppId"] = "integration-test-app",
-                ["Authentication:Facebook:AppSecret"] = "integration-test-secret"
+                ["Authentication:Facebook:AppSecret"] = "integration-test-secret",
+                ["MediaUpload:MaxArchiveBytes"] = "2048"
             });
         });
 
