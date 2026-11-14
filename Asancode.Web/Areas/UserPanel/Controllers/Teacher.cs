@@ -147,7 +147,12 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             }
 
             var file = files[0];
-            if (file.Length == 0 || file.Length > _mediaUploadOptions.MaxArchiveBytes)
+            if (file.Length == 0)
+            {
+                return BadRequest(new { error = "The uploaded archive is empty." });
+            }
+
+            if (file.Length > _mediaUploadOptions.MaxArchiveBytes)
             {
                 return StatusCode(StatusCodes.Status413PayloadTooLarge);
             }

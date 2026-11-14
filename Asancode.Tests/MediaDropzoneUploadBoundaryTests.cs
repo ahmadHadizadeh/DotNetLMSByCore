@@ -124,6 +124,42 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     }
 
     [Fact]
+    public async Task Upload_endpoint_rejects_empty_archive_files()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
+
+        using var form = CreateArchiveForm(Array.Empty<byte>());
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId={scenario.CourseId}",
+            form,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Upload_endpoint_rejects_more_than_one_archive_file()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
+
+        using var form = CreateArchiveForm();
+        var secondFile = new ByteArrayContent(CreateValidTestZipArchive());
+        secondFile.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+        form.Add(secondFile, "files", "episode-2.zip");
+
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId={scenario.CourseId}",
+            form,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Upload_endpoint_rejects_files_larger_than_the_configured_archive_limit()
     {
         var scenario = await SeedScenarioAsync();
