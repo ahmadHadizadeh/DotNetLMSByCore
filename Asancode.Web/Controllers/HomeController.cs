@@ -38,38 +38,16 @@ namespace Asancode.Web.Controllers
 
 
         [Route("OnlinePayment/{id}")]
+        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult OnlinePayment(int id)
         {
-            if (HttpContext.Request.Query["Status"] != "" &&
-                HttpContext.Request.Query["Status"].ToString().ToLower() == "ok" &&
-                HttpContext.Request.Query["Authority"] != "")
-            {
-                string authority = HttpContext.Request.Query["Authority"];
-                var wallet = _userservice.GetWalletByWalletId(id);
-                //var amon=_userservice.AddSubscribe()
-                // var payment = new Zarinpal.Payment("cd3ddeb1-1c95-4d1a-aeb9-d87477ba5b55", wallet.Amount);
-                // var res = payment.Verification(authority).Result;
-                // if (res.Status == 100)
-                // {
-                //     ViewBag.IsSuccess = true;
-                //     ViewBag.code = res.RefId;
-                //     wallet.IsPay = true;
-                //     _userservice.UpdateWallet(wallet);
-                // }
-
-
-
-                //SandBox  
-
-                var payment = new ZarinpalSandbox.Payment(wallet.Amount);
-                var res = payment.PaymentRequest("پرداخت تستی زرین پال",
-                    "https://localhost:44384/OnlinePayment" + wallet.WalletId);
-                if (res.Result.Status == 100)
-                {
-                    return Redirect("https://sandbox.zarinpal.com/pg/startpay" + res.Result.Authority);
-                }
-            }
-            return View();
+            // The legacy sandbox gateway integration has been removed because its
+            // dependency graph is vulnerable and its callback flow is not verifiable.
+            // This endpoint remains fail-closed until the payment adapter is
+            // redesigned with server-side request/verification and idempotency.
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "درگاه پرداخت تا تکمیل بازطراحی امن پرداخت موقتاً غیرفعال است.");
         }
         public ActionResult GetSubGroup(int id)
         {
