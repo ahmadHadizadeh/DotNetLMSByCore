@@ -90,7 +90,7 @@ namespace Asancode.Web.Controllers
 
                     string rarPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Episode",
                         ep.EpisodeFileName);
-                    var archive = ArchiveFactory.Open(rarPath);
+                    var archive = ArchiveFactory.OpenArchive(rarPath);
                     var Entries = archive.Entries.OrderBy(x => x.Key.Length);
                     foreach (var en in Entries)
                     {
