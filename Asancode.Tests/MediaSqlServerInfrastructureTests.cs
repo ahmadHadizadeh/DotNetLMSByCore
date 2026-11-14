@@ -70,4 +70,21 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
         Assert.Equal(HttpStatusCode.Redirect, otherTeacherResponse.StatusCode);
         Assert.Equal("/teacher-course", otherTeacherResponse.Headers.Location?.OriginalString);
     }
+
+    [Fact]
+    public async Task Admin_episode_create_page_is_mapped_and_requires_authentication()
+    {
+        using var client = fixture.Factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
+        using var response = await client.GetAsync(
+            "/Admin/Course/CreateEpisode/1",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/Login", response.Headers.Location?.OriginalString);
+    }
 }

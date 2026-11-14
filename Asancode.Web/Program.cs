@@ -132,6 +132,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Razor Pages are registered above and must also be mapped as endpoints.
+app.MapRazorPages();
+
 #endregion
 
 app.Run();
