@@ -21,7 +21,7 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
     public async Task Teacher_without_admin_permissions_cannot_open_admin_episode_page()
     {
         var scenario = await SeedScenarioAsync();
-        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        using var client = CreateAuthenticatedClient(scenario.TeacherUserName);
 
         using var response = await client.GetAsync(
             $"{CreatePage}/{scenario.CourseId}",
@@ -205,7 +205,7 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
         var episodeId = await SeedEpisodeAsync(scenario.CourseId, episodeTitle, fileName);
         var filePath = GetEpisodeFilePath(fileName);
         Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-        await File.WriteAllBytesAsync(filePath, CreateTestArchive());
+        await File.WriteAllBytesAsync(filePath, CreateTestArchive(), TestContext.Current.CancellationToken);
 
         using var client = CreateAuthenticatedClient(scenario.AdminUserName);
         await AddAntiforgeryHeaderAsync(client, $"{EditPage}/{episodeId}");
