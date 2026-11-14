@@ -183,6 +183,24 @@ public sealed class MediaDropzoneUploadBoundaryTests(MediaSqlServerFixture fixtu
     }
 
     [Fact]
+    public async Task Upload_endpoint_rejects_non_multipart_content_types()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var client = CreateAuthenticatedClient(scenario.OwnerUserName);
+        await AddAntiforgeryHeaderAsync(client, scenario.CourseId);
+
+        using var content = new StringContent("not a multipart form");
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        using var response = await client.PostAsync(
+            $"{DropzoneRoute}?courseId={scenario.CourseId}",
+            content,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Upload_endpoint_rejects_file_extensions_outside_the_archive_allowlist()
     {
         var scenario = await SeedScenarioAsync();

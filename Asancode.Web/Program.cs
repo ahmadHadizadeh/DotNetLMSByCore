@@ -90,7 +90,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
-    options.MultipartBodyLengthLimit = maxMediaMultipartBytes;
+    options.MultipartBodyLengthLimit = int.MaxValue;
 });
 
 #endregion
