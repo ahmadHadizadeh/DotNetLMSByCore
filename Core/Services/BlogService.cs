@@ -70,7 +70,7 @@ namespace Core.Services
             }
         }
 
-                public Blog GetBlogById(int id)
+        public Blog GetBlogById(int id)
         {
             return _context.Blog.Find(id);
         }
@@ -119,7 +119,7 @@ namespace Core.Services
             }
         }
 
-                public void UpdateBlogById(Blog blog)
+        public void UpdateBlogById(Blog blog)
         {
             _context.Blog.Update(blog);
             _context.SaveChanges();
