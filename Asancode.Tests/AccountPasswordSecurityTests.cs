@@ -26,6 +26,14 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
     }
 
     [Fact]
+    public void Legacy_md5_encoder_preserves_the_existing_net8_utf8_hash_format()
+    {
+        Assert.Equal(
+            "CB-40-54-B1-28-51-16-D8-A7-FD-EF-01-6E-CC-43-0E",
+            PasswordEncript.EncriptPassword("رمزعبور۱۲۳"));
+    }
+
+    [Fact]
     public async Task LoginUser_rehashes_a_valid_legacy_password_after_successful_login()
     {
         const string password = "Legacy-Password-2026!";
