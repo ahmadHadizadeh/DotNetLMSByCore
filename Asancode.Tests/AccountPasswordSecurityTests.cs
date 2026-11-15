@@ -1,7 +1,7 @@
 using Asancode.Tests.Infrastructure;
 using Core.DTO;
 using Core.Security;
-using Core.Services;
+using Core.Services.Interfaces;
 using DataLayer.Context;
 using DataLayer.Entities.User;
 using Microsoft.AspNetCore.Identity;
@@ -36,7 +36,7 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         var originalHash = user.Password;
 
-        var authenticated = new Userservice(dbContext).LoginUser(new LoginViewModel
+        var authenticated = scope.ServiceProvider.GetRequiredService<IUserService>().LoginUser(new LoginViewModel
         {
             Email = user.Email,
             Password = password
