@@ -1,4 +1,3 @@
-using Core.Convertors;
 using Core.DTO;
 using Core.Genarate;
 using Core.Security;
@@ -98,45 +97,49 @@ namespace Core.Services
         public int AddCourse(Course course, IFormFile courseImage, IFormFile Demo)
         {
             course.CreateDate = DateTime.Now;
-
             course.CourseImageName = "/UserPanel/Defult.jpg";
+            string? storedImageName = null;
 
-            //check img
-            if (courseImage != null && courseImage.IsImage())
+            if (ImageUploadProcessor.TryProcess(courseImage,
+                ImageUploadProcessor.DefaultMainMaxWidth, 500, out var processedImage))
             {
-                //Image Name
-                course.CourseImageName = CreateUniqCode.buildUniqCod() + Path.GetExtension(courseImage.FileName);
+                storedImageName = ImageUploadProcessor.SaveImagePair(processedImage!,
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "MainImage"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Thumnail"));
+                course.CourseImageName = storedImageName;
 
-                //Image Path
-                string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/MainImage", course.CourseImageName);
-
-                //save
-                using (var stream = new FileStream(imagePath, FileMode.Create))
-                {
-                    courseImage.CopyTo(stream);
-                }
-                //image resaiz
-                ImageConvertor imgResizer = new ImageConvertor();
-                string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
-
-                imgResizer.Image_resize(imagePath, thumPath, 500);
-
+                // Preserve the existing Demo upload contract.
                 if (Demo != null)
                 {
-                    //Image Name
                     course.DemoFileName = CreateUniqCode.buildUniqCod() + Path.GetExtension(Demo.FileName);
-                    //Image Path
-                    string demoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Demo", course.DemoFileName);
-                    using var stream = new FileStream(demoPath, FileMode.Create);
+                    var demoPath = Path.Combine(Directory.GetCurrentDirectory(),
+                        "wwwroot", "Course", "Demo", course.DemoFileName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(demoPath)!);
+                    using var stream = new FileStream(demoPath, FileMode.CreateNew);
                     Demo.CopyTo(stream);
                 }
             }
-            _context.Add(course);
-            _context.SaveChanges();
-            return course.CourseId;
+
+            try
+            {
+                _context.Add(course);
+                _context.SaveChanges();
+                return course.CourseId;
+            }
+            catch
+            {
+                if (storedImageName is not null)
+                {
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "MainImage"), storedImageName);
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Thumnail"), storedImageName);
+                }
+                throw;
+            }
         }
 
-        public ShowListForCourse GetListCourse(int pageId = 1, string filterTitle = "")
+                public ShowListForCourse GetListCourse(int pageId = 1, string filterTitle = "")
         {
             IQueryable<Course> result = _context.Course.Include(c => c.CourseEpisodes);
             if (!string.IsNullOrEmpty(filterTitle))
@@ -166,65 +169,71 @@ namespace Core.Services
 
         public void UpdateCourse(Course course, IFormFile courseImage, IFormFile Demo)
         {
-            course.UpdateDate = DateTime.Now;
+            var existingCourse = _context.Course.SingleOrDefault(item => item.CourseId == course.CourseId)
+                ?? throw new InvalidOperationException($"Course {course.CourseId} was not found.");
+            var oldImageName = existingCourse.CourseImageName;
+            var oldDemoFileName = existingCourse.DemoFileName;
 
-            //check img
-            if (courseImage != null && courseImage.IsImage())
+            _context.Entry(existingCourse).CurrentValues.SetValues(course);
+            existingCourse.CourseImageName = oldImageName;
+            existingCourse.DemoFileName = oldDemoFileName;
+            existingCourse.UpdateDate = DateTime.Now;
+
+            string? newImageName = null;
+            string? newDemoFileName = null;
+            if (ImageUploadProcessor.TryProcess(courseImage,
+                ImageUploadProcessor.DefaultMainMaxWidth, 600, out var processedImage))
             {
-                if (course.CourseImageName != "Defult.jpg")
-                {
-                    string deletImgPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/MainImage", course.CourseImageName);
-                    if (File.Exists(deletImgPath))
-                    {
-                        File.Delete(deletImgPath);
-                    }
-                    string deletImgtumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
-                    if (File.Exists(deletImgtumPath))
-                    {
-                        File.Delete(deletImgtumPath);
-                    }
-                }
-                //Image Name
-                course.CourseImageName = CreateUniqCode.buildUniqCod() + Path.GetExtension(courseImage.FileName);
+                newImageName = ImageUploadProcessor.SaveImagePair(processedImage!,
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "MainImage"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Thumnail"));
+                existingCourse.CourseImageName = newImageName;
 
-                //Image Path
-                string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/MainImage", course.CourseImageName);
-
-                //save
-                using (var stream = new FileStream(imagePath, FileMode.Create))
-                {
-                    courseImage.CopyTo(stream);
-                }
-                //image resaiz
-                ImageConvertor imgResizer = new ImageConvertor();
-                string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
-
-                imgResizer.Image_resize(imagePath, thumPath, 600);
-
+                // Preserve the existing Demo upload contract.
                 if (Demo != null)
                 {
-                    if (course.DemoFileName != null)
-                    {
-                        string deletDemoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Demo", course.DemoFileName);
-                        if (File.Exists(deletDemoPath))
-                        {
-                            File.Delete(deletDemoPath);
-                        }
-                    }
-                    //Image Name
-                    course.DemoFileName = CreateUniqCode.buildUniqCod() + Path.GetExtension(Demo.FileName);
-
-                    //Image Path
-                    string demoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Demo", course.DemoFileName);
-                    using var stream = new FileStream(demoPath, FileMode.Create);
+                    newDemoFileName = CreateUniqCode.buildUniqCod() + Path.GetExtension(Demo.FileName);
+                    var demoPath = Path.Combine(Directory.GetCurrentDirectory(),
+                        "wwwroot", "Course", "Demo", newDemoFileName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(demoPath)!);
+                    using var stream = new FileStream(demoPath, FileMode.CreateNew);
                     Demo.CopyTo(stream);
+                    existingCourse.DemoFileName = newDemoFileName;
                 }
             }
-            _context.Course.Update(course);
-            _context.SaveChanges();
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch
+            {
+                if (newImageName is not null)
+                {
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "MainImage"), newImageName);
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Thumnail"), newImageName);
+                }
+                if (newDemoFileName is not null)
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Demo"), newDemoFileName);
+                throw;
+            }
+
+            if (newImageName is not null)
+            {
+                ImageUploadProcessor.DeleteImageIfSafe(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "MainImage"), oldImageName);
+                ImageUploadProcessor.DeleteImageIfSafe(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Thumnail"), oldImageName);
+            }
+            if (newDemoFileName is not null)
+                ImageUploadProcessor.DeleteImageIfSafe(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Demo"), oldDemoFileName);
         }
 
-        public int AddCourseEpisode(CourseEpisode episode, IFormFile episodeFile)
+                public int AddCourseEpisode(CourseEpisode episode, IFormFile episodeFile)
         {
             if (episodeFile.Length <= 0)
             {
@@ -701,32 +710,33 @@ namespace Core.Services
 
         public int AddBanner(BannerInformation banner, IFormFile bannerImage)
         {
-            //check img
-            if (bannerImage != null && bannerImage.IsImage())
+            banner.BannerImageName = "/Banner/baner.jpg";
+            string? storedImageName = null;
+            if (ImageUploadProcessor.TryProcess(bannerImage,
+                ImageUploadProcessor.DefaultMainMaxWidth,
+                ImageUploadProcessor.DefaultThumbnailMaxWidth, out var processedImage))
             {
-                //Image Name
-                banner.BannerImageName = CreateUniqCode.buildUniqCod() + Path.GetExtension(bannerImage.FileName);
-
-                //Image Path
-                string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Banner/MainImage", banner.BannerImageName);
-
-                //save
-                using (var stream = new FileStream(imagePath, FileMode.Create))
-                {
-                    bannerImage.CopyTo(stream);
-                }
-                //image resaiz
-                //ImageConvertor imgResizer = new ImageConvertor();
-                //string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Course/Thumnail", course.CourseImageName);
-
-                //imgResizer.Image_resize(imagePath, thumPath, 500);
+                storedImageName = ImageUploadProcessor.SaveImage(processedImage!,
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Banner", "MainImage"));
+                banner.BannerImageName = storedImageName;
             }
-            _context.Add(banner);
-            _context.SaveChanges();
-            return banner.BannerId;
+
+            try
+            {
+                _context.Add(banner);
+                _context.SaveChanges();
+                return banner.BannerId;
+            }
+            catch
+            {
+                if (storedImageName is not null)
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Banner", "MainImage"), storedImageName);
+                throw;
+            }
         }
 
-        public BannerInformation GetBannerId(int bannerId)
+                public BannerInformation GetBannerId(int bannerId)
         {
             return _context.BannerInformations.Find(bannerId);
         }
