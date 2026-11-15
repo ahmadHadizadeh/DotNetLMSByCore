@@ -29,16 +29,13 @@ public static class ImageUploadProcessor
                 return false;
 
             input.Position = 0;
-            SKImageInfo sourceInfo;
-            using (var codec = SKCodec.Create(input))
-            {
-                if (codec is null ||
-                    codec.EncodedFormat is not (SKEncodedImageFormat.Jpeg or
-                        SKEncodedImageFormat.Png or SKEncodedImageFormat.Webp))
-                    return false;
-                sourceInfo = codec.Info;
-            }
+            using var codec = SKCodec.Create(input);
+            if (codec is null ||
+                codec.EncodedFormat is not (SKEncodedImageFormat.Jpeg or
+                    SKEncodedImageFormat.Png or SKEncodedImageFormat.Webp))
+                return false;
 
+            var sourceInfo = codec.Info;
             var pixelCount = (long)sourceInfo.Width * sourceInfo.Height;
             if (sourceInfo.Width <= 0 || sourceInfo.Height <= 0 ||
                 sourceInfo.Width > MaximumDimension ||
@@ -46,10 +43,14 @@ public static class ImageUploadProcessor
                 pixelCount > MaximumPixelCount)
                 return false;
 
-            input.Position = 0;
-            using var sourceBitmap = SKBitmap.Decode(input);
-            if (sourceBitmap is null || sourceBitmap.Width != sourceInfo.Width ||
-                sourceBitmap.Height != sourceInfo.Height)
+            var bitmapInfo = new SKImageInfo(
+                sourceInfo.Width,
+                sourceInfo.Height,
+                SKColorType.Bgra8888,
+                SKAlphaType.Premul);
+            using var sourceBitmap = new SKBitmap(bitmapInfo);
+            var decodeResult = codec.GetPixels(sourceBitmap.Info, sourceBitmap.GetPixels());
+            if (decodeResult != SKCodecResult.Success)
                 return false;
 
             var main = EncodeJpeg(sourceBitmap, mainMaxWidth);
