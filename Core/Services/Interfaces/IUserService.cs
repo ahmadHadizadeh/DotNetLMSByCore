@@ -12,6 +12,7 @@ namespace Core.Services.Interfaces
         bool IsExistUserName(string userName);
         bool IsExistEmail(string email);
         int AddUser(Users user);
+        string HashPassword(Users user, string password);
         Users LoginUser(LoginViewModel login);
         Users LoginExternal(string email);
         bool ActiveCodeAccount(string activeCode);
