@@ -1,5 +1,4 @@
-﻿using Core.Convertors;
-using Core.DTO;
+﻿using Core.DTO;
 using Core.Genarate;
 using Core.Security;
 using Core.Services.Interfaces;
@@ -40,79 +39,87 @@ namespace Core.Services
 
         public int AddBlog(Blog blog, IFormFile BlogImageName)
         {
-            if (BlogImageName != null && BlogImageName.IsImage())
+            blog.BlogImageName = "/Blog/default.jpg";
+            string? storedImageName = null;
+            if (ImageUploadProcessor.TryProcess(BlogImageName,
+                ImageUploadProcessor.DefaultMainMaxWidth, 500, out var processedImage))
             {
-                //image name
-                blog.BlogImageName = CreateUniqCode.buildUniqCod() + Path.GetExtension(BlogImageName.FileName);
-                //Image Path
-                string mainImagepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/MainImage", blog.BlogImageName);
-                //save
-                using (var stream = new FileStream(mainImagepath, FileMode.Create))
-                {
-                    BlogImageName.CopyTo(stream);
-                }
-                //resize
-                ImageConvertor imagResizer = new ImageConvertor();
-                string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/Thumnail",
-                    blog.BlogImageName);
-                imagResizer.Image_resize(mainImagepath, thumPath, 500);
-                //add
+                storedImageName = ImageUploadProcessor.SaveImagePair(processedImage!,
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "MainImage"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "Thumnail"));
+                blog.BlogImageName = storedImageName;
             }
+
             blog.Date = DateTime.Now;
-            _context.Add(blog);
-            _context.SaveChanges();
-            return blog.BlogId;
+            try
+            {
+                _context.Add(blog);
+                _context.SaveChanges();
+                return blog.BlogId;
+            }
+            catch
+            {
+                if (storedImageName is not null)
+                {
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "MainImage"), storedImageName);
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "Thumnail"), storedImageName);
+                }
+                throw;
+            }
         }
 
-        public Blog GetBlogById(int id)
+                public Blog GetBlogById(int id)
         {
             return _context.Blog.Find(id);
         }
 
         public void UpdateBlog(Blog blog, IFormFile BlogImageName)
         {
-            if (BlogImageName != null && BlogImageName.IsImage())
+            var existingBlog = _context.Blog.SingleOrDefault(item => item.BlogId == blog.BlogId)
+                ?? throw new InvalidOperationException($"Blog {blog.BlogId} was not found.");
+            var oldImageName = existingBlog.BlogImageName;
+            _context.Entry(existingBlog).CurrentValues.SetValues(blog);
+            existingBlog.BlogImageName = oldImageName;
+            existingBlog.Date = DateTime.Now;
+
+            string? newImageName = null;
+            if (ImageUploadProcessor.TryProcess(BlogImageName,
+                ImageUploadProcessor.DefaultMainMaxWidth, 400, out var processedImage))
             {
-                if (blog.BlogImageName != "Default.png")
-                {
-                    //main img
-                    string mainImagepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/MainImage", blog.BlogImageName);
-                    if (File.Exists(mainImagepath))
-                    {
-                        File.Delete(mainImagepath);
-                    }
-                    //deletee path
-
-                    //Thumimg img
-                    string thumPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/Thumnail", blog.BlogImageName);
-                    //deletee path
-                    if (File.Exists(thumPath))
-                    {
-                        File.Delete(thumPath);
-                    }
-                    //img name
-                    blog.BlogImageName = CreateUniqCode.buildUniqCod() + Path.GetExtension(BlogImageName.FileName);
-
-                    //imge path
-                    string mainPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/MainImage", blog.BlogImageName);
-
-                    //save
-                    using (var stream = new FileStream(mainPath, FileMode.Create))
-                    {
-                        BlogImageName.CopyTo(stream);
-                    }
-                    //resize
-                    string thumPathImage = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Blog/Thumnail", blog.BlogImageName);
-                    ImageConvertor imgresizer = new ImageConvertor();
-                    imgresizer.Image_resize(mainPath, thumPathImage, 400);
-                }
+                newImageName = ImageUploadProcessor.SaveImagePair(processedImage!,
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "MainImage"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "Thumnail"));
+                existingBlog.BlogImageName = newImageName;
             }
-            blog.Date = DateTime.Now;
-            _context.Blog.Update(blog);
-            _context.SaveChanges();
+
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch
+            {
+                if (newImageName is not null)
+                {
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "MainImage"), newImageName);
+                    ImageUploadProcessor.DeleteImageIfSafe(
+                        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "Thumnail"), newImageName);
+                }
+                throw;
+            }
+
+            if (newImageName is not null)
+            {
+                ImageUploadProcessor.DeleteImageIfSafe(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "MainImage"), oldImageName);
+                ImageUploadProcessor.DeleteImageIfSafe(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Blog", "Thumnail"), oldImageName);
+            }
         }
 
-        public void UpdateBlogById(Blog blog)
+                public void UpdateBlogById(Blog blog)
         {
             _context.Blog.Update(blog);
             _context.SaveChanges();
