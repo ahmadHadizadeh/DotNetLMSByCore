@@ -51,31 +51,34 @@ namespace Core.Services
         public Users LoginUser(LoginViewModel login)
         {
             string email = FixedTexd.FixedEmail(login.Email);
-            var user = _context.Users.SingleOrDefault(u => u.Email == email);
+            var candidateUsers = _context.Users
+                .Where(u => u.Email == email)
+                .OrderBy(u => u.UserId)
+                .ToList();
 
-            if (user == null)
+            foreach (var user in candidateUsers)
             {
-                return null;
+                string storedHash = user.Password;
+                var verificationResult = _passwordHasher.VerifyPassword(
+                    user,
+                    storedHash,
+                    login.Password);
+
+                if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                {
+                    continue;
+                }
+
+                if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded
+                    && !TryUpgradePasswordHash(user, storedHash, login.Password))
+                {
+                    continue;
+                }
+
+                return user;
             }
 
-            string storedHash = user.Password;
-            var verificationResult = _passwordHasher.VerifyPassword(
-                user,
-                storedHash,
-                login.Password);
-
-            if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
-            {
-                return null;
-            }
-
-            if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded
-                && !TryUpgradePasswordHash(user, storedHash, login.Password))
-            {
-                return null;
-            }
-
-            return user;
+            return null;
         }
 
         private bool TryUpgradePasswordHash(Users user, string storedHash, string password)
