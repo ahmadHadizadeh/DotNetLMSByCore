@@ -65,7 +65,7 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var authenticated = new Userservice(dbContext).LoginUser(new LoginViewModel
+        var authenticated = scope.ServiceProvider.GetRequiredService<IUserService>().LoginUser(new LoginViewModel
         {
             Email = user.Email,
             Password = password
@@ -87,7 +87,7 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        new Userservice(dbContext).ChangePassword(user.UserName, newPassword);
+        scope.ServiceProvider.GetRequiredService<IUserService>().ChangePassword(user.UserName, newPassword);
 
         var persisted = await dbContext.Users
             .AsNoTracking()
@@ -106,7 +106,7 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
 
-        var userId = new Userservice(dbContext).AddUserForAdmin(new CreateNewUserViewModel
+        var userId = scope.ServiceProvider.GetRequiredService<IUserService>().AddUserForAdmin(new CreateNewUserViewModel
         {
             UserName = $"password-admin-{Guid.NewGuid():N}",
             Email = $"password-admin-{Guid.NewGuid():N}@example.test",
@@ -135,7 +135,7 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
         await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
         var originalHash = user.Password;
 
-        var authenticated = new Userservice(dbContext).LoginUser(new LoginViewModel
+        var authenticated = scope.ServiceProvider.GetRequiredService<IUserService>().LoginUser(new LoginViewModel
         {
             Email = user.Email,
             Password = "Incorrect-Password-2026!"
