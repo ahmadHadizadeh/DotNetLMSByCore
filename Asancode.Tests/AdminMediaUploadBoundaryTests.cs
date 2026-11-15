@@ -240,6 +240,22 @@ public sealed class AdminMediaUploadBoundaryTests(MediaSqlServerFixture fixture)
         }
     }
 
+    [Fact]
+    public async Task Banner_create_page_requires_both_admin_permissions()
+    {
+        var scenario = await SeedScenarioAsync();
+        using var teacherClient = CreateAuthenticatedClient(scenario.TeacherUserName);
+        using var teacherResponse = await teacherClient.GetAsync(
+            "/Admin/Banner/CreateBanner", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, teacherResponse.StatusCode);
+        Assert.StartsWith("/Login?", teacherResponse.Headers.Location?.OriginalString);
+
+        using var adminClient = CreateAuthenticatedClient(scenario.AdminUserName);
+        using var adminResponse = await adminClient.GetAsync(
+            "/Admin/Banner/CreateBanner", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, adminResponse.StatusCode);
+    }
+
     private async Task<AdminMediaScenario> SeedScenarioAsync()
     {
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
