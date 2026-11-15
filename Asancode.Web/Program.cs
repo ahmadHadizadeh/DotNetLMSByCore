@@ -2,6 +2,7 @@ using AngleSharp;
 using Asancode.Web.ExterNalProvider;
 using Asancode.Web.Options;
 using Core.Convertors;
+using Core.Security;
 using Core.Services;
 using Core.Services.Interfaces;
 using DataLayer.Context;
@@ -22,6 +23,7 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddRazorPages();
 
 // IOC
+builder.Services.AddTransient<UserPasswordHasher>();
 builder.Services.AddTransient<IUserService, Userservice>();
 builder.Services.AddTransient<IViewRenderService, RenderViewToString>();
 builder.Services.AddTransient<IPermissionService, PermissionService>();
