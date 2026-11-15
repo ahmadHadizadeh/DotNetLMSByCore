@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Core.Security.CheckPermission;
 using Core.Services.Interfaces;
 using DataLayer.Entities.Banner;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Asancode.Web.Pages.Admin.Banner
 {
+    [PermissionChecker(1)]
+    [PermissionChecker(2)]
     public class CreateBannerModel : PageModel
     {
         private ICourseGroupService _courseGroupService;
