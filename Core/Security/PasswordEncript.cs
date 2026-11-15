@@ -11,7 +11,7 @@ public static class PasswordEncript
 {
     public static string EncriptPassword(string pass)
     {
-        var originalBytes = ASCIIEncoding.Default.GetBytes(pass);
+        var originalBytes = Encoding.UTF8.GetBytes(pass);
         var encodedBytes = MD5.HashData(originalBytes);
         return BitConverter.ToString(encodedBytes);
     }
