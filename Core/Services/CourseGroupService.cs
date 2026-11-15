@@ -139,7 +139,7 @@ namespace Core.Services
             }
         }
 
-                public ShowListForCourse GetListCourse(int pageId = 1, string filterTitle = "")
+        public ShowListForCourse GetListCourse(int pageId = 1, string filterTitle = "")
         {
             IQueryable<Course> result = _context.Course.Include(c => c.CourseEpisodes);
             if (!string.IsNullOrEmpty(filterTitle))
@@ -233,7 +233,7 @@ namespace Core.Services
                     Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Course", "Demo"), oldDemoFileName);
         }
 
-                public int AddCourseEpisode(CourseEpisode episode, IFormFile episodeFile)
+        public int AddCourseEpisode(CourseEpisode episode, IFormFile episodeFile)
         {
             if (episodeFile.Length <= 0)
             {
@@ -736,7 +736,7 @@ namespace Core.Services
             }
         }
 
-                public BannerInformation GetBannerId(int bannerId)
+        public BannerInformation GetBannerId(int bannerId)
         {
             return _context.BannerInformations.Find(bannerId);
         }
