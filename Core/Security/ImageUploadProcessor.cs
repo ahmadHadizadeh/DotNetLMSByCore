@@ -132,10 +132,15 @@ public static class ImageUploadProcessor
         var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
         using var destination = new SKBitmap(info);
         using (var canvas = new SKCanvas(destination))
-        using (var paint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High })
+        using (var paint = new SKPaint { IsAntialias = true })
         {
             canvas.Clear(SKColors.White);
-            canvas.DrawBitmap(source, SKRect.Create(0, 0, width, height), paint);
+
+            // Mitchell cubic sampling preserves the historical high-quality
+            // resampling behavior previously selected via SKFilterQuality.High.
+            var sampling = new SKSamplingOptions(
+                new SKCubicResampler(1f / 3f, 1f / 3f));
+            canvas.DrawBitmap(source, SKRect.Create(0, 0, width, height), sampling, paint);
             canvas.Flush();
         }
         using var image = SKImage.FromBitmap(destination);
