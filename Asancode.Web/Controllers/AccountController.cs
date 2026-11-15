@@ -74,11 +74,12 @@ namespace Asancode.Web.Controllers
                 ActiveCode = CreateUniqCode.buildUniqCod(),
                 Email = FixedTexd.FixedEmail(register.Email),
                 IsActive = false,
-                Password = PasswordEncript.EncriptPassword(register.Password),
+                Password = string.Empty,
                 RegisterDate = DateTime.Now,
                 UserImage = "Defult.jpg",
                 UserName = register.UserName
             };
+            user.Password = _userService.HashPassword(user, register.Password);
             _userService.AddUser(user);
             string body = _renderService.RenderToStringAsync("_ActiveEmail", user);
             SendEmail.Send(user.Email, "ایمیل فعال سازی", body);
@@ -260,8 +261,7 @@ namespace Asancode.Web.Controllers
 
                 return NotFound();
 
-            string ConvertPass = PasswordEncript.EncriptPassword(reset.Password);
-            user.Password = ConvertPass;
+            user.Password = _userService.HashPassword(user, reset.Password);
             _userService.UpdateUser(user);
             ViewBag.IsSuccessResstPass = true;
             return View(reset);

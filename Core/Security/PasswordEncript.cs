@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Core.Security
+namespace Core.Security;
+
+/// <summary>
+/// Legacy MD5 encoding retained only for verifying existing database hashes.
+/// New passwords must be created with UserPasswordHasher.
+/// </summary>
+public static class PasswordEncript
 {
-    public class PasswordEncript
+    public static string EncriptPassword(string pass)
     {
-        public static string EncriptPassword(string pass)
-        {
-            Byte[] originalBytes;
-            Byte[] encodedBytes;
-            MD5 md5;
-            // get bytes for original password and compute hash (encoded password)   
-            md5 = new MD5CryptoServiceProvider();
-            originalBytes = ASCIIEncoding.Default.GetBytes(pass);
-            encodedBytes = md5.ComputeHash(originalBytes);
-            //Convert encoded bytes back to a 'readable' string   
-            return BitConverter.ToString(encodedBytes);
-        }
+        var originalBytes = Encoding.UTF8.GetBytes(pass);
+        var encodedBytes = MD5.HashData(originalBytes);
+        return BitConverter.ToString(encodedBytes);
     }
-
 }
-
