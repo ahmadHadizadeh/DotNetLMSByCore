@@ -17,11 +17,13 @@ namespace Core.Services
 {
     public class Userservice : IUserService
     {
-        private AsanwebContext _context;
+        private readonly AsanwebContext _context;
+        private readonly UserPasswordHasher _passwordHasher;
 
-        public Userservice(AsanwebContext context)
+        public Userservice(AsanwebContext context, UserPasswordHasher passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         public bool IsExistUserName(string userName)
@@ -41,11 +43,71 @@ namespace Core.Services
             return user.UserId;
         }
 
+        public string HashPassword(Users user, string password)
+        {
+            return _passwordHasher.HashPassword(user, password);
+        }
+
         public Users LoginUser(LoginViewModel login)
         {
-            string password = PasswordEncript.EncriptPassword(login.Password);
             string email = FixedTexd.FixedEmail(login.Email);
-            return _context.Users.SingleOrDefault(u => u.Email == email && u.Password == password);
+            var user = _context.Users.SingleOrDefault(u => u.Email == email);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            string storedHash = user.Password;
+            var verificationResult = _passwordHasher.VerifyPassword(
+                user,
+                storedHash,
+                login.Password);
+
+            if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+            {
+                return null;
+            }
+
+            if (verificationResult == Microsoft.AspNetCore.Identity.PasswordVerificationResult.SuccessRehashNeeded
+                && !TryUpgradePasswordHash(user, storedHash, login.Password))
+            {
+                return null;
+            }
+
+            return user;
+        }
+
+        private bool TryUpgradePasswordHash(Users user, string storedHash, string password)
+        {
+            string replacementHash = _passwordHasher.HashPassword(user, password);
+
+            int updatedRows = _context.Users
+                .Where(u => u.UserId == user.UserId && u.Password == storedHash)
+                .ExecuteUpdate(setters => setters.SetProperty(
+                    u => u.Password,
+                    replacementHash));
+
+            if (updatedRows == 1)
+            {
+                var passwordEntry = _context.Entry(user).Property(u => u.Password);
+                passwordEntry.CurrentValue = replacementHash;
+                passwordEntry.OriginalValue = replacementHash;
+                passwordEntry.IsModified = false;
+                return true;
+            }
+
+            // A password reset or another login may have updated the hash concurrently.
+            // Never overwrite that newer value with a rehash based on stale credentials.
+            var currentUser = _context.Users
+                .AsNoTracking()
+                .SingleOrDefault(u => u.UserId == user.UserId);
+
+            return currentUser != null
+                && _passwordHasher.VerifyPassword(
+                    currentUser,
+                    currentUser.Password,
+                    password) != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed;
         }
 
         public bool ActiveCodeAccount(string activeCode)
@@ -164,14 +226,21 @@ namespace Core.Services
 
         public bool CompareOldPassword(string userName, string oldPassword)
         {
-            string encriptPassword = PasswordEncript.EncriptPassword(oldPassword);
-            return _context.Users.Any(u => u.UserName == userName && u.Password == encriptPassword);
+            var user = GetUserByUserName(userName);
+            return user != null
+                && _passwordHasher.VerifyPassword(user, user.Password, oldPassword)
+                    != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed;
         }
 
         public void ChangePassword(string userName, string newPassword)
         {
             var user = GetUserByUserName(userName);
-            user.Password = PasswordEncript.EncriptPassword(newPassword);
+            if (user == null)
+            {
+                throw new InvalidOperationException("Cannot change a password for a user that does not exist.");
+            }
+
+            user.Password = _passwordHasher.HashPassword(user, newPassword);
             UpdateUser(user);
         }
 
@@ -298,7 +367,7 @@ namespace Core.Services
             Users myUsers = new Users();
             myUsers.UserName = adminUser.UserName;
             myUsers.Email = FixedTexd.FixedEmail(adminUser.Email);
-            myUsers.Password = PasswordEncript.EncriptPassword(adminUser.Password);
+            myUsers.Password = _passwordHasher.HashPassword(myUsers, adminUser.Password);
             myUsers.ActiveCode = CreateUniqCode.buildUniqCod();
             myUsers.RegisterDate = DateTime.Now;
             myUsers.IsActive = true;
@@ -349,7 +418,7 @@ namespace Core.Services
             //password
             if (!string.IsNullOrEmpty(editAdmin.Password))
             {
-                user.Password = PasswordEncript.EncriptPassword(editAdmin.Password);
+                user.Password = _passwordHasher.HashPassword(user, editAdmin.Password);
             }
 
             #region Edit ImageUser
