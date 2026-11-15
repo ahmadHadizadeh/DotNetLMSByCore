@@ -41,6 +41,9 @@ jobs:
       - name: Restore dependencies (NuGet audit enabled)
         run: dotnet restore Asancode.sln --verbosity minimal
 
+      - name: Report direct and transitive NuGet vulnerabilities
+        run: dotnet package list Asancode.sln --include-transitive --vulnerable --format json --no-restore
+
       - name: Build solution
         run: dotnet build Asancode.sln --configuration Release --no-restore --verbosity minimal
 
