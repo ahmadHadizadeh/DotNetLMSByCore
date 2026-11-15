@@ -50,6 +50,28 @@ public sealed class ImageUploadProcessorTests
     }
 
     [Fact]
+    public void TryProcess_rejects_images_exceeding_dimension_limit()
+    {
+        using var bitmap = new SKBitmap(
+            new SKImageInfo(ImageUploadProcessor.MaximumDimension + 1, 1));
+        bitmap.Erase(SKColors.CornflowerBlue);
+        using var image = SKImage.FromBitmap(bitmap);
+        using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+        var bytes = encoded!.ToArray();
+        using var stream = new MemoryStream(bytes);
+        var file = new FormFile(stream, 0, bytes.Length, "image", "oversized-dimensions.png");
+
+        var accepted = ImageUploadProcessor.TryProcess(
+            file,
+            ImageUploadProcessor.DefaultMainMaxWidth,
+            ImageUploadProcessor.DefaultThumbnailMaxWidth,
+            out var result);
+
+        Assert.False(accepted);
+        Assert.Null(result);
+    }
+
+    [Fact]
     public void DeleteImageIfSafe_does_not_delete_files_outside_media_directory()
     {
         var root = Path.Combine(Path.GetTempPath(), $"image-upload-{Guid.NewGuid():N}");
