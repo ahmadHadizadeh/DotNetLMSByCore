@@ -221,6 +221,28 @@ public sealed class AccountPasswordSecurityTests(MediaSqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task CompareOldPassword_accepts_legacy_and_current_identity_hashes()
+    {
+        const string legacyPassword = "Legacy-Panel-Password-2026!";
+        const string modernPassword = "Modern-Panel-Password-2026!";
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var legacyUser = CreateUser(PasswordEncript.EncriptPassword(legacyPassword));
+        var modernUser = CreateUser("pending");
+        modernUser.Password = _identityHasher.HashPassword(modernUser, modernPassword);
+
+        dbContext.Users.AddRange(legacyUser, modernUser);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        Assert.True(userService.CompareOldPassword(legacyUser.UserName, legacyPassword));
+        Assert.True(userService.CompareOldPassword(modernUser.UserName, modernPassword));
+        Assert.False(userService.CompareOldPassword(legacyUser.UserName, "Incorrect-Password"));
+        Assert.False(userService.CompareOldPassword(modernUser.UserName, "Incorrect-Password"));
+    }
+
+    [Fact]
     public async Task Failed_legacy_login_does_not_modify_the_stored_password_hash()
     {
         const string password = "Legacy-Password-2026!";
