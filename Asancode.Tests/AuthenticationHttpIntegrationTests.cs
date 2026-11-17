@@ -12,6 +12,7 @@ using Core.Security;
 using DataLayer.Context;
 using DataLayer.Entities.User;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -370,9 +371,11 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         bool isPersistent)
     {
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var cookies));
-        var cookie = Assert.Single(cookies!.Where(value => value.StartsWith(
-            ".AsanCode.Authentication=",
-            StringComparison.OrdinalIgnoreCase)));
+        var cookie = Assert.Single(
+            cookies!,
+            value => value.StartsWith(
+                ".AsanCode.Authentication=",
+                StringComparison.OrdinalIgnoreCase));
 
         Assert.Contains("secure", cookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("httponly", cookie, StringComparison.OrdinalIgnoreCase);
