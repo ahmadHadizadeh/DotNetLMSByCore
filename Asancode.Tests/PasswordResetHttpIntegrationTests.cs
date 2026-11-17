@@ -58,7 +58,7 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("ایمیل وارد شده معتبر نمی باشد", html);
+        Assert.Contains("value=\"not-an-email\"", html);
         Assert.DoesNotContain("اگر حسابی با این ایمیل وجود داشته باشد", html);
         Assert.Empty(emailSender.Messages);
     }
@@ -168,12 +168,12 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
         using var client = CreateClient();
 
         using var invalidResponse = await client.GetAsync(
-            "/ResetPassword/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "/Account/ResetPassword/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, invalidResponse.StatusCode);
 
         using var response = await client.GetAsync(
-            "/ResetPassword/" + token,
+            "/Account/ResetPassword/" + token,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -190,10 +190,10 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
         var userService = fixture.Factory.Services.GetRequiredService<IUserService>();
         var token = userService.CreatePasswordResetToken(user.UserId);
         using var client = CreateClient();
-        _ = await GetAntiforgeryTokenAsync(client, "/ResetPassword/" + token);
+        _ = await GetAntiforgeryTokenAsync(client, "/Account/ResetPassword/" + token);
 
         using var response = await client.PostAsync(
-            "/ResetPassword",
+            "/Account/ResetPassword",
             CreateForm(
                 ("ResetToken", token),
                 ("Password", "Replacement-Password-2026!"),
@@ -211,10 +211,10 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
         var userService = fixture.Factory.Services.GetRequiredService<IUserService>();
         var token = userService.CreatePasswordResetToken(user.UserId);
         using var client = CreateClient();
-        var antiforgeryToken = await GetAntiforgeryTokenAsync(client, "/ResetPassword/" + token);
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client, "/Account/ResetPassword/" + token);
 
         using var invalidResponse = await client.PostAsync(
-            "/ResetPassword",
+            "/Account/ResetPassword",
             CreateForm(
                 ("ResetToken", token),
                 ("Password", "Replacement-Password-2026!"),
@@ -228,7 +228,7 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
         Assert.True(userService.IsPasswordResetTokenValid(token));
 
         using var validResponse = await client.PostAsync(
-            "/ResetPassword",
+            "/Account/ResetPassword",
             CreateForm(
                 ("ResetToken", token),
                 ("Password", "Replacement-Password-2026!"),
