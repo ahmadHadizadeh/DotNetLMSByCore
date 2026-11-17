@@ -16,6 +16,7 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
 {
     private const byte AccountScope = 1;
     private const byte IpScope = 2;
+    private const byte AccountCapacityScope = 3;
 
     private readonly AsanwebContext _context;
     private readonly LoginRateLimitOptions _options;
@@ -59,9 +60,22 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
     public LoginRateLimitStatus GetStatus(string email, IPAddress? clientIpAddress)
     {
         var now = _timeProvider.GetUtcNow().UtcDateTime;
-        var accountEntry = FindEntry(AccountScope, CreateAccountKey(email));
-        var ipEntry = FindIpEntry(clientIpAddress);
+        var accountKey = CreateAccountKey(email);
+        var accountEntry = FindEntry(AccountScope, accountKey);
 
+        // The capacity gate applies to every previously untracked identifier, regardless
+        // of whether that identifier belongs to a registered user. This keeps the public
+        // login response independent of account existence.
+        if (accountKey is not null && accountEntry is null)
+        {
+            var capacityEntry = FindEntry(AccountCapacityScope, CreateAccountCapacityKey());
+            if (GetRemainingSeconds(capacityEntry, now) > 0)
+            {
+                accountEntry = capacityEntry;
+            }
+        }
+
+        var ipEntry = FindIpEntry(clientIpAddress);
         return CombineStatus(accountEntry, ipEntry, now);
     }
 
@@ -76,24 +90,70 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
         }
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
-
         using var transaction = _context.Database.BeginTransaction(IsolationLevel.Serializable);
 
+        // Keep lock acquisition order stable: account key, IP key, then the shared
+        // capacity gate. Existing buckets are locked before their state is inspected.
         var accountEntry = accountKey is null
             ? null
-            : LoadOrCreateForUpdate(AccountScope, accountKey, now);
-
+            : LoadExistingForUpdate(AccountScope, accountKey);
         var ipEntry = ipKey is null
             ? null
-            : LoadOrCreateForUpdate(IpScope, ipKey, now);
+            : LoadExistingForUpdate(IpScope, ipKey);
 
         var existingLimit = CombineStatus(accountEntry, ipEntry, now);
         if (existingLimit.IsLimited)
         {
-            // A concurrent request may have established a lock after the controller's
-            // pre-check. Do not keep incrementing either bucket while that lock is active.
             transaction.Commit();
             return existingLimit;
+        }
+
+        if (accountKey is not null && accountEntry is null)
+        {
+            // This single SQL row serializes all new account-bucket admissions across
+            // application instances. The count and insert therefore share one lock.
+            var capacityEntry = LoadOrCreateForUpdate(
+                AccountCapacityScope,
+                CreateAccountCapacityKey(),
+                now);
+
+            var capacityLimit = CombineStatus(capacityEntry, ipEntry, now);
+            if (capacityLimit.IsLimited)
+            {
+                transaction.Commit();
+                return capacityLimit;
+            }
+
+            var trackedAccountBuckets = _context.AuthenticationRateLimitEntries
+                .Count(entry => entry.Scope == AccountScope);
+
+            if (trackedAccountBuckets >= _options.MaxAccountBuckets)
+            {
+                capacityEntry.BlockedUntilUtc =
+                    now.AddMinutes(_options.AccountBucketCapacityRetryMinutes);
+                capacityEntry.LastAttemptUtc = now;
+
+                _context.SaveChanges();
+                transaction.Commit();
+                return CombineStatus(capacityEntry, ipEntry, now);
+            }
+
+            accountEntry = new AuthenticationRateLimitEntry
+            {
+                Scope = AccountScope,
+                KeyHash = accountKey,
+                FailedAttempts = 0,
+                WindowStartedUtc = now,
+                BlockedUntilUtc = null,
+                ConsecutiveLockouts = 0,
+                LastAttemptUtc = now
+            };
+            _context.AuthenticationRateLimitEntries.Add(accountEntry);
+        }
+
+        if (ipKey is not null && ipEntry is null)
+        {
+            ipEntry = LoadOrCreateForUpdate(IpScope, ipKey, now);
         }
 
         if (accountEntry is not null)
@@ -292,6 +352,9 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
 
         return Math.Max(1, (int)Math.Ceiling((blockedUntil - now).TotalSeconds));
     }
+
+    private string CreateAccountCapacityKey() =>
+        CreateKeyHash("account-capacity", "global");
 
     private string? CreateAccountKey(string email)
     {
