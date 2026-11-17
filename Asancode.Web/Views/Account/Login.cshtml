@@ -56,11 +56,11 @@
                         <h4 class="card-title text-center">وارد شدن </h4>
                         @if (ViewBag.LoginRateLimitSeconds is int retrySeconds && retrySeconds > 0)
                         {
-                            <div class="alert alert-warning text-center mt-3" role="status" aria-live="polite">
-                                <p class="mb-2">برای محافظت از حساب شما، ورود موقتاً متوقف شده است.</p>
-                                <p class="mb-2">لطفاً تا پایان زمان‌سنج منتظر بمانید:</p>
-                                <strong class="d-inline-block fs-5" id="login-rate-limit-countdown" data-seconds="@retrySeconds">--:--</strong>
-                                <p class="mt-2 mb-0">پس از پایان زمان، امکان تلاش دوباره فعال می‌شود.</p>
+                            <div class="alert alert-warning text-center mt-3">
+                                <p class="mb-2" role="status" aria-live="polite">به‌دلیل تلاش‌های ناموفق اخیر، امکان ورود موقتاً محدود شده است.</p>
+                                <p class="mb-2">لطفاً تا پایان زمان باقی‌مانده صبر کنید؛ سپس دوباره تلاش کنید:</p>
+                                <strong class="d-inline-block fs-5" id="login-rate-limit-countdown" data-seconds="@retrySeconds" aria-live="off" aria-label="زمان باقی‌مانده تا امکان تلاش دوباره">--:--</strong>
+                                <p class="mt-2 mb-0">پس از پایان زمان، دکمه ورود دوباره فعال می‌شود.</p>
                             </div>
                         }
                         @if (User.Identity.IsAuthenticated)
@@ -199,6 +199,6 @@
         }
 
         renderCountdown();
-        timerId = window.setInterval(renderCountdown, 250);
+        timerId = window.setInterval(renderCountdown, 1000);
     })();
 </script>
