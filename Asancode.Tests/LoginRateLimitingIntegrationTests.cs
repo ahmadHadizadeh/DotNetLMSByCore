@@ -123,7 +123,9 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
         await using var finalScope = fixture.Factory.Services.CreateAsyncScope();
         var finalDb = finalScope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var finalEntry = await finalDb.AuthenticationRateLimitEntries
-            .SingleAsync(item => item.Scope == 1, TestContext.Current.CancellationToken);
+            .SingleAsync(
+                item => item.Scope == 1 && item.KeyHash == keyHash,
+                TestContext.Current.CancellationToken);
         Assert.Equal(2, finalEntry.ConsecutiveLockouts);
     }
 
