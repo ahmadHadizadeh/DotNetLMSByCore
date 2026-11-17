@@ -4,18 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
-using Asancode.Web.ExterNalProvider;
+using System.Threading.Tasks;
 using Core.Convertors;
 using Core.DTO;
 using Core.Genarate;
 using Core.Security;
 using Core.Security.Sender;
 using Core.Services.Interfaces;
-using DataLayer.Context;
 using DataLayer.Entities.User;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Core.DTO.Recatch;
@@ -28,22 +26,16 @@ namespace Asancode.Web.Controllers
         #region InterFace
 
         private IUserService _userService;
-        private AsanwebContext _context;
         private IViewRenderService _renderService;
-        private SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
 
         public AccountController(
             IUserService userService,
-            AsanwebContext context,
             IViewRenderService renderService,
-            SignInManager<ApplicationUser> signInManager,
             IEmailSender emailSender)
         {
             _userService = userService;
-            _context = context;
             _renderService = renderService;
-            _signInManager = signInManager;
             _emailSender = emailSender;
         }
 
@@ -58,6 +50,7 @@ namespace Asancode.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Route("Register")]
         public IActionResult Register(RegisterViewModel register)
         {
@@ -98,55 +91,20 @@ namespace Asancode.Web.Controllers
         #region Login
 
         [Route("login", Name = "LoginGet")]
-        public ActionResult Login(bool EditProfile = false)
+        public ActionResult Login(bool EditProfile = false, string? ReturnUrl = null)
         {
             ViewBag.EditProfile = EditProfile;
+            ViewBag.ReturnUrl = ReturnUrl;
 
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Route("login", Name = "LoginPost")]
-        public ActionResult Login(LoginViewModel login, IFormCollection form, string ReturnUrl = "/")
+        public async Task<ActionResult> Login(LoginViewModel login, string? ReturnUrl = null)
         {
-            #region CaptchaCode
-
-            //string urlToPost = "https://www.google.com/recaptcha/api/siteverify";
-            //string secretKey = "6Ld5m5YdAAAAAI9g6_s-VlF8T_sHRd7C66_F4nw6"; // change this
-            //string gRecaptchaResponse = form["g-recaptcha-response"];
-            //var postData = "secret=" + secretKey + "&response=" + gRecaptchaResponse;
-            //// send post data
-            //HttpWebRequest request = (HttpWebRequest)WebRequest.Create(urlToPost);
-            //request.Method = "POST";
-            //request.ContentLength = postData.Length;
-            //request.ContentType = "application/x-www-form-urlencoded";
-            //using (var streamWriter = new StreamWriter(request.GetRequestStream()))
-            //{
-            //    streamWriter.Write(postData);
-            //}
-            //// receive the response now
-            //string result = string.Empty;
-            //using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            //{
-            //    using (var reader = new StreamReader(response.GetResponseStream()))
-            //    {
-            //        result = reader.ReadToEnd();
-            //    }
-            //}
-            //// validate the response from Google reCaptcha
-
-            //var captChaesponse = JsonConvert.DeserializeObject<ReCaptchaResponse>(result);
-
-            //if (!captChaesponse.Success)
-            //{
-            //    ViewBag.Message = "Sorry, please validate the reCAPTCHA";
-            //    return View();
-            //}
-            //// go ahead and write code to validate username password against database
-
-            #endregion CaptchaCode
-
-            #region LoginPost
+            ViewBag.ReturnUrl = ReturnUrl;
 
             if (!ModelState.IsValid)
             {
@@ -155,40 +113,41 @@ namespace Asancode.Web.Controllers
 
             var user = _userService.LoginUser(login);
 
-            if (user != null)
+            if (user == null)
             {
-                if (user.IsActive)
-                {
-                    var claims = new List<Claim>()
-                    {
-                        new Claim(ClaimTypes.NameIdentifier,user.UserId.ToString()),
-                        new Claim(ClaimTypes.Name,user.UserName)
-                    };
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-
-                    var properties = new AuthenticationProperties
-                    {
-                        IsPersistent = login.RememberMe
-                    };
-                    HttpContext.SignInAsync(principal, properties);
-
-                    ViewBag.IsSuccess = true;
-                    if (ReturnUrl != "/")
-                    {
-                        return Redirect(ReturnUrl);
-                    }
-                    return View();
-                }
-                else
-                {
-                    ModelState.AddModelError("Email", "حساب کاربری شما فعال نمی باشد");
-                }
+                ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
+                return View(login);
             }
-            ModelState.AddModelError("Email", "کاربری با مشخصات وارد شده یافت نشد");
-            return View(login);
 
-            #endregion LoginPost
+            if (!user.IsActive)
+            {
+                ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
+                return View(login);
+            }
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new(ClaimTypes.Name, user.UserName)
+            };
+
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            var properties = new AuthenticationProperties
+            {
+                IsPersistent = login.RememberMe
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                properties);
+
+            var destination = Url.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
+            return LocalRedirect(destination);
         }
 
         #endregion Login
@@ -205,11 +164,13 @@ namespace Asancode.Web.Controllers
 
         #region Logout
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [Route("Logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return Redirect("/Login");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(Login));
         }
 
         #endregion Logout
@@ -285,42 +246,5 @@ namespace Asancode.Web.Controllers
         }
 
         #endregion ResetPassword
-
-        #region MyRegion
-
-        [Route("provider/{provider}")]
-        public IActionResult GetProvider(string provider)
-        {
-            var redirectUrl = Url.RouteUrl("ExternalLogin", Request.Scheme);
-            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-            return Challenge(properties, provider);
-        }
-
-        [Route("external-login", Name = "ExternalLogin")]
-        public IActionResult ExternalLogin()
-        {
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            var user = _context.Users.SingleOrDefault(u => u.Email == userEmail);
-            if (user != null)
-            {
-                var claims = new List<Claim>()
-                {
-                    new(ClaimTypes.NameIdentifier,user.UserId.ToString()),
-                    new(ClaimTypes.Name,user.UserName)
-                };
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                var principal = new ClaimsPrincipal(identity);
-
-                var properties = new AuthenticationProperties
-                {
-                    IsPersistent = true
-                };
-                HttpContext.SignInAsync(principal, properties);
-            }
-            return RedirectToRoute("LoginGet");
-        }
-
-        #endregion
     }
 }
