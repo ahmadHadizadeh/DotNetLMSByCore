@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Builder;
+using System.Net;
 using Core.Security.Sender;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +45,7 @@ public sealed class MediaTestApplicationFactory(string connectionString)
 
         builder.ConfigureTestServices(services =>
         {
+            services.AddSingleton<IStartupFilter, TestRemoteIpAddressStartupFilter>();
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<RecordingEmailSender>();
             services.AddSingleton<IEmailSender>(provider =>
@@ -80,5 +83,27 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                     };
                 });
         });
+    }
+}
+
+internal sealed class TestRemoteIpAddressStartupFilter : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+    {
+        return app =>
+        {
+            app.Use(async (context, nextMiddleware) =>
+            {
+                var configuredAddress = context.Request.Headers["X-Test-Remote-IP"].ToString();
+                if (IPAddress.TryParse(configuredAddress, out var address))
+                {
+                    context.Connection.RemoteIpAddress = address;
+                }
+
+                await nextMiddleware();
+            });
+
+            next(app);
+        };
     }
 }
