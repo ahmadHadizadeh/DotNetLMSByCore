@@ -10,6 +10,8 @@ using DataLayer.Entities.User;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Asancode.Tests;
@@ -65,6 +67,131 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, blockedResponse.StatusCode);
+    }
+
+
+    [Fact]
+    public async Task Ip_limit_is_enforced_through_http_and_untrusted_forwarded_headers_do_not_override_client_ip()
+    {
+        var users = await SeedUsersAsync(60);
+        using var client = CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-Remote-IP", "192.0.2.123");
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        for (var attempt = 1; attempt <= users.Count; attempt++)
+        {
+            using var response = await client.PostAsync(
+                "/login",
+                CreateForm(
+                    ("Email", users[attempt - 1].Email),
+                    ("Password", "Wrong-Password-2026!"),
+                    ("__RequestVerificationToken", antiforgeryToken)),
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(
+                attempt == 60 ? HttpStatusCode.TooManyRequests : HttpStatusCode.OK,
+                response.StatusCode);
+
+            if (attempt == 60)
+            {
+                Assert.True(response.Headers.TryGetValues("Retry-After", out var retryHeaders));
+                var retryAfter = int.Parse(Assert.Single(retryHeaders!));
+                Assert.InRange(retryAfter, 1, 300);
+            }
+        }
+
+        // The test connection is explicitly assigned a known remote address.
+        // An untrusted X-Forwarded-For header must not replace that address.
+        client.DefaultRequestHeaders.Add("X-Forwarded-For", "198.51.100.88");
+        var anotherUser = await SeedUserAsync();
+        using var blockedResponse = await client.PostAsync(
+            "/login",
+            CreateForm(
+                ("Email", anotherUser.Email),
+                ("Password", "Wrong-Password-2026!"),
+                ("__RequestVerificationToken", antiforgeryToken)),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, blockedResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cleanup_deletes_expired_entries_in_bounded_batches_and_preserves_active_cooldowns()
+    {
+        const int batchSize = 10;
+        const int maxBatches = 2;
+        var now = DateTime.UtcNow;
+        var expiredKeys = Enumerable.Range(0, 25)
+            .Select(index => Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes($"cleanup-{Guid.NewGuid():N}-{index}"))))
+            .ToArray();
+        var activeKey = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes($"cleanup-active-{Guid.NewGuid():N}")));
+        var allKeys = expiredKeys.Append(activeKey).ToArray();
+
+        await using (var seedScope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            db.AuthenticationRateLimitEntries.AddRange(
+                expiredKeys.Select(key => new AuthenticationRateLimitEntry
+                {
+                    Scope = 1,
+                    KeyHash = key,
+                    FailedAttempts = 1,
+                    WindowStartedUtc = now.AddHours(-3),
+                    BlockedUntilUtc = null,
+                    ConsecutiveLockouts = 0,
+                    LastAttemptUtc = now.AddHours(-3)
+                }));
+            db.AuthenticationRateLimitEntries.Add(new AuthenticationRateLimitEntry
+            {
+                Scope = 1,
+                KeyHash = activeKey,
+                FailedAttempts = 0,
+                WindowStartedUtc = now.AddDays(-3),
+                BlockedUntilUtc = now.AddMinutes(10),
+                ConsecutiveLockouts = 1,
+                LastAttemptUtc = now.AddDays(-3)
+            });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        try
+        {
+            var cleanupOptions = Options.Create(new LoginRateLimitOptions
+            {
+                KeyPepper = "dGVzdC1rZXktcGVwcGVyLWZvci1pbnRlZ3JhdGlvbi10ZXN0cy0yMDI2LTMyLWJ5dGVz",
+                CleanupBatchSize = batchSize,
+                CleanupMaxBatchesPerRun = maxBatches
+            });
+            var cleanup = new AuthenticationRateLimitCleanupService(
+                fixture.Factory.Services.GetRequiredService<IServiceScopeFactory>(),
+                cleanupOptions,
+                NullLogger<AuthenticationRateLimitCleanupService>.Instance,
+                TimeProvider.System);
+
+            var deleted = await cleanup.CleanupExpiredEntriesAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(batchSize * maxBatches, deleted);
+
+            await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            var remainingExpired = await verifyDb.AuthenticationRateLimitEntries
+                .CountAsync(entry => expiredKeys.Contains(entry.KeyHash), TestContext.Current.CancellationToken);
+            var activeStillExists = await verifyDb.AuthenticationRateLimitEntries
+                .AnyAsync(entry => entry.KeyHash == activeKey, TestContext.Current.CancellationToken);
+
+            Assert.Equal(5, remainingExpired);
+            Assert.True(activeStillExists);
+        }
+        finally
+        {
+            await using var cleanupScope = fixture.Factory.Services.CreateAsyncScope();
+            var db = cleanupScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            await db.AuthenticationRateLimitEntries
+                .Where(entry => allKeys.Contains(entry.KeyHash))
+                .ExecuteDeleteAsync(TestContext.Current.CancellationToken);
+        }
     }
 
     [Fact]
@@ -264,27 +391,37 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
             HMACSHA256.HashData(Convert.FromBase64String(testPepper), input));
     }
 
-    private async Task<Users> SeedUserAsync()
+    private async Task<Users> SeedUserAsync() =>
+        (await SeedUsersAsync(1))[0];
+
+    private async Task<List<Users>> SeedUsersAsync(int count)
     {
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<UserPasswordHasher>();
-        var id = Guid.NewGuid().ToString("N");
-        var user = new Users
-        {
-            UserName = $"login-limit-{id}",
-            Email = $"login-limit-{id}@example.test",
-            Password = "pending",
-            UserImage = "Defult.jpg",
-            ActiveCode = Guid.NewGuid().ToString("N"),
-            RegisterDate = DateTime.UtcNow,
-            IsActive = true,
-            IsDelete = false
-        };
+        var users = new List<Users>(count);
 
-        user.Password = hasher.HashPassword(user, "Initial-Password-2026!");
-        db.Users.Add(user);
+        for (var index = 0; index < count; index++)
+        {
+            var id = Guid.NewGuid().ToString("N");
+            var user = new Users
+            {
+                UserName = $"login-limit-{id}",
+                Email = $"login-limit-{id}@example.test",
+                Password = "pending",
+                UserImage = "Defult.jpg",
+                ActiveCode = Guid.NewGuid().ToString("N"),
+                RegisterDate = DateTime.UtcNow,
+                IsActive = true,
+                IsDelete = false
+            };
+
+            user.Password = hasher.HashPassword(user, "Initial-Password-2026!");
+            users.Add(user);
+        }
+
+        db.Users.AddRange(users);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        return user;
+        return users;
     }
 }
