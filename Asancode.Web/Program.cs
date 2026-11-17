@@ -15,10 +15,21 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Development-only fallback: never commit a reusable HMAC pepper to source control.
+// Production and other persistent environments must supply a stable secret via configuration.
+var rateLimitPepperConfigurationKey = $"{LoginRateLimitOptions.SectionName}:KeyPepper";
+if (builder.Environment.IsDevelopment()
+    && string.IsNullOrWhiteSpace(builder.Configuration[rateLimitPepperConfigurationKey]))
+{
+    builder.Configuration[rateLimitPepperConfigurationKey] =
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+}
 
 #region Services
 
