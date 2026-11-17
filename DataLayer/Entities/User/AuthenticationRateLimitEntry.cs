@@ -2,7 +2,7 @@ namespace DataLayer.Entities.User;
 
 public sealed class AuthenticationRateLimitEntry
 {
-    /// <summary>1 = account identifier, 2 = client IP address.</summary>
+    /// <summary>1 = account identifier, 2 = client IP address, 3 = account-bucket capacity gate.</summary>
     public byte Scope { get; set; }
 
     /// <summary>HMAC-SHA256 digest; the original account identifier or IP is never persisted.</summary>
