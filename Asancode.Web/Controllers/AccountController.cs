@@ -225,13 +225,20 @@ namespace Asancode.Web.Controllers
             }
             string fixemail = FixedTexd.FixedEmail(forgot.Email);
             var user = _userService.GetUserByEmail(fixemail);
-            if (user == null)
+            if (user != null)
             {
-                ModelState.AddModelError("Email", "کاربری یافت نشد");
-                return View(forgot);
+                var resetToken = _userService.CreatePasswordResetToken(user.UserId);
+                var emailModel = new PasswordResetEmailViewModel
+                {
+                    UserName = user.UserName,
+                    ResetToken = resetToken
+                };
+
+                String bodyEmail = _renderService.RenderToStringAsync("_ForgotPassword", emailModel);
+                SendEmail.Send(user.Email, "بازیابی کلمه عبور", bodyEmail);
             }
-            String bodyEmail = _renderService.RenderToStringAsync("_ForgotPassword", user);
-            SendEmail.Send(user.Email, "بازیابی کلمه عبور", bodyEmail);
+
+            // Keep the response identical for known and unknown addresses.
             ViewBag.IsSuccess = true;
             return View();
         }
@@ -242,10 +249,12 @@ namespace Asancode.Web.Controllers
 
         public IActionResult ResetPassword(string id)
         {
-            return View(new ResetPasswordViewModel()
+            if (!_userService.IsPasswordResetTokenValid(id))
             {
-                ActiveCode = id,
-            });
+                return NotFound();
+            }
+
+            return View(new ResetPasswordViewModel { ResetToken = id });
         }
 
         [HttpPost]
@@ -256,13 +265,12 @@ namespace Asancode.Web.Controllers
                 return View(reset);
             }
 
-            var user = _userService.GetUserActiveCode(reset.ActiveCode);
-            if (user == null)
-
+            if (!_userService.TryResetPassword(reset.ResetToken, reset.Password))
+            {
                 return NotFound();
+            }
 
-            user.Password = _userService.HashPassword(user, reset.Password);
-            _userService.UpdateUser(user);
+            reset.ResetToken = string.Empty;
             ViewBag.IsSuccessResstPass = true;
             return View(reset);
         }
