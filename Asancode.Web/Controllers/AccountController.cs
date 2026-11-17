@@ -115,13 +115,13 @@ namespace Asancode.Web.Controllers
 
             if (user == null)
             {
-                ModelState.AddModelError("Email", "کاربری با مشخصات وارد شده یافت نشد");
+                ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
                 return View(login);
             }
 
             if (!user.IsActive)
             {
-                ModelState.AddModelError("Email", "حساب کاربری شما فعال نمی باشد");
+                ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
                 return View(login);
             }
 
