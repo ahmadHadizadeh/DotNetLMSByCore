@@ -72,7 +72,9 @@ builder.Services
         && options.IpFailureThreshold is > 0 and <= 100000
         && options.IpWindowMinutes is > 0 and <= 1440
         && options.IpCooldownMinutes is > 0 and <= 1440
-        && options.RetentionHours is >= 1 and <= 720,
+        && options.RetentionHours is >= 1 and <= 720
+        && options.CleanupBatchSize is > 0 and <= 5000
+        && options.CleanupMaxBatchesPerRun is > 0 and <= 100,
         "Authentication rate-limit thresholds and durations must be positive and internally consistent.")
     .ValidateOnStart();
 
