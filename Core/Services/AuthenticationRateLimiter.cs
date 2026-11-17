@@ -63,18 +63,9 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
         var accountKey = CreateAccountKey(email);
         var accountEntry = FindEntry(AccountScope, accountKey);
 
-        // The capacity gate applies to every previously untracked identifier, regardless
-        // of whether that identifier belongs to a registered user. This keeps the public
-        // login response independent of account existence.
-        if (accountKey is not null && accountEntry is null)
-        {
-            var capacityEntry = FindEntry(AccountCapacityScope, CreateAccountCapacityKey());
-            if (GetRemainingSeconds(capacityEntry, now) > 0)
-            {
-                accountEntry = capacityEntry;
-            }
-        }
-
+        // The capacity gate is intentionally checked only after password verification
+        // fails. A registered user with valid credentials can still sign in when storage
+        // is full; registered and unregistered identifiers receive the same failure response.
         var ipEntry = FindIpEntry(clientIpAddress);
         return CombineStatus(accountEntry, ipEntry, now);
     }
