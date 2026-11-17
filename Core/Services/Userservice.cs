@@ -618,9 +618,5 @@ namespace Core.Services
             _context.SaveChanges();
         }
 
-        public Users LoginExternal(string email)
-        {
-            return _context.Users.SingleOrDefault(u => u.Email == email);
-        }
-    }
+}
 }

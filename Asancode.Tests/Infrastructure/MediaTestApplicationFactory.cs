@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -36,18 +37,27 @@ public sealed class MediaTestApplicationFactory(string connectionString)
             services.AddSingleton<IEmailSender>(provider =>
                 provider.GetRequiredService<RecordingEmailSender>());
 
+            const string testOrCookieScheme = "MediaTestOrCookie";
+
             services
                 .AddAuthentication(options =>
                 {
-                    options.DefaultScheme = MediaTestAuthenticationHandler.SchemeName;
-                    options.DefaultAuthenticateScheme = MediaTestAuthenticationHandler.SchemeName;
-                    options.DefaultChallengeScheme = MediaTestAuthenticationHandler.SchemeName;
-                    options.DefaultForbidScheme = MediaTestAuthenticationHandler.SchemeName;
-                    options.DefaultSignInScheme = MediaTestAuthenticationHandler.SchemeName;
+                    options.DefaultScheme = testOrCookieScheme;
+                    options.DefaultAuthenticateScheme = testOrCookieScheme;
+                    options.DefaultChallengeScheme = testOrCookieScheme;
+                    options.DefaultForbidScheme = testOrCookieScheme;
+                    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
                 .AddScheme<AuthenticationSchemeOptions, MediaTestAuthenticationHandler>(
                     MediaTestAuthenticationHandler.SchemeName,
-                    _ => { });
+                    _ => { })
+                .AddPolicyScheme(testOrCookieScheme, "Media test header or application cookie", options =>
+                {
+                    options.ForwardDefaultSelector = context =>
+                        context.Request.Headers.ContainsKey(MediaTestAuthenticationHandler.UserHeaderName)
+                            ? MediaTestAuthenticationHandler.SchemeName
+                            : CookieAuthenticationDefaults.AuthenticationScheme;
+                });
         });
     }
 }

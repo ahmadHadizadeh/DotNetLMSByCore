@@ -8,6 +8,7 @@ using Core.Services;
 using Core.Services.Interfaces;
 using DataLayer.Context;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -73,21 +74,18 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie(options =>
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.LoginPath = "/Login";
     options.LogoutPath = "/Logout";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(43200);
-})
-.AddGoogle(option =>
-{
-    option.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-    option.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-})
-.AddFacebook(facebookOptions =>
-{
-    facebookOptions.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
-    facebookOptions.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+
+    options.Cookie.Name = ".AsanCode.Authentication";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true;
 });
 
 // Form limits
