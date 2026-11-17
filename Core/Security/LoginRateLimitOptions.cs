@@ -22,4 +22,7 @@ public sealed class LoginRateLimitOptions
     public List<string> TrustedProxies { get; set; } = [];
 
     public int RetentionHours { get; set; } = 48;
+
+    public int CleanupBatchSize { get; set; } = 500;
+    public int CleanupMaxBatchesPerRun { get; set; } = 10;
 }
