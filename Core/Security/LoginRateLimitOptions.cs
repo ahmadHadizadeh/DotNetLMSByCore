@@ -11,6 +11,11 @@ public sealed class LoginRateLimitOptions
     public int AccountBaseCooldownMinutes { get; set; } = 1;
     public int AccountMaxCooldownMinutes { get; set; } = 15;
 
+    // Hard ceiling for distinct persisted account identifiers. New, untracked identifiers
+    // share a short capacity cooldown when this ceiling is reached.
+    public int MaxAccountBuckets { get; set; } = 10_000;
+    public int AccountBucketCapacityRetryMinutes { get; set; } = 1;
+
     public bool EnableIpRateLimit { get; set; }
     public int IpFailureThreshold { get; set; } = 60;
     public int IpWindowMinutes { get; set; } = 15;
