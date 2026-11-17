@@ -150,10 +150,10 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
                 var registeredStatus = limiter.GetStatus(registeredUser.Email, null);
                 var unregisteredStatus = limiter.GetStatus("not-registered@example.test", null);
 
-                Assert.True(registeredStatus.IsLimited);
-                Assert.True(unregisteredStatus.IsLimited);
-                Assert.InRange(registeredStatus.RetryAfterSeconds, 1, 60);
-                Assert.InRange(unregisteredStatus.RetryAfterSeconds, 1, 60);
+                // Capacity is enforced only after a failed credential check, so a valid
+                // registered user is not locked out merely because the table is full.
+                Assert.False(registeredStatus.IsLimited);
+                Assert.False(unregisteredStatus.IsLimited);
             }
 
             using var client = CreateClient(factory);
@@ -163,7 +163,7 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
                 "/login",
                 CreateForm(
                     ("Email", registeredUser.Email),
-                    ("Password", "Initial-Password-2026!"),
+                    ("Password", "Wrong-Password-2026!"),
                     ("__RequestVerificationToken", antiforgeryToken)),
                 TestContext.Current.CancellationToken);
 
