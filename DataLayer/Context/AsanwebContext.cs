@@ -24,6 +24,7 @@ public class AsanwebContext : DbContext
     #region Table
 
     public DbSet<Users> Users { get; set; }
+    public DbSet<AuthenticationRateLimitEntry> AuthenticationRateLimitEntries { get; set; }
     public DbSet<Roles> Roles { get; set; }
     public DbSet<UsersRole> UsersRoles { get; set; }
     public DbSet<WalletType> WalletTypes { get; set; }
@@ -83,6 +84,25 @@ public class AsanwebContext : DbContext
         modelBuilder.Entity<Users>()
             .Property(user => user.SecurityStamp)
             .HasDefaultValueSql("NEWID()");
+
+        modelBuilder.Entity<AuthenticationRateLimitEntry>(entity =>
+        {
+            entity.ToTable("AuthenticationRateLimitEntries");
+            entity.HasKey(entry => new { entry.Scope, entry.KeyHash });
+            entity.Property(entry => entry.Scope).HasColumnType("tinyint");
+            entity.Property(entry => entry.KeyHash)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasMaxLength(64)
+                .HasColumnType("char(64)");
+            entity.Property(entry => entry.FailedAttempts).HasColumnType("int");
+            entity.Property(entry => entry.WindowStartedUtc).HasColumnType("datetime2");
+            entity.Property(entry => entry.BlockedUntilUtc).HasColumnType("datetime2");
+            entity.Property(entry => entry.ConsecutiveLockouts).HasColumnType("int");
+            entity.Property(entry => entry.LastAttemptUtc).HasColumnType("datetime2");
+            entity.HasIndex(entry => entry.LastAttemptUtc)
+                .HasDatabaseName("IX_AuthenticationRateLimitEntries_LastAttemptUtc");
+        });
 
         #region code for Delete problem FK_Table
 

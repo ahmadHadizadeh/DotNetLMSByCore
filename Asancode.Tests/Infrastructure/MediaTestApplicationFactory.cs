@@ -26,7 +26,18 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 ["Authentication:Google:ClientSecret"] = "integration-test-secret",
                 ["Authentication:Facebook:AppId"] = "integration-test-app",
                 ["Authentication:Facebook:AppSecret"] = "integration-test-secret",
-                ["MediaUpload:MaxArchiveBytes"] = "2048"
+                ["MediaUpload:MaxArchiveBytes"] = "2048",
+                ["AuthenticationRateLimit:KeyPepper"] = "dGVzdGluZy1vbmx5LXBlcHBlci1mb3Itc3FsLXNlcnZlci10ZXN0cy0yMDI2",
+                ["AuthenticationRateLimit:AccountFailureThreshold"] = "8",
+                ["AuthenticationRateLimit:AccountWindowMinutes"] = "15",
+                ["AuthenticationRateLimit:AccountBaseCooldownMinutes"] = "1",
+                ["AuthenticationRateLimit:AccountMaxCooldownMinutes"] = "15",
+                ["AuthenticationRateLimit:EnableIpRateLimit"] = "true",
+                ["AuthenticationRateLimit:IpFailureThreshold"] = "60",
+                ["AuthenticationRateLimit:IpWindowMinutes"] = "15",
+                ["AuthenticationRateLimit:IpCooldownMinutes"] = "5",
+                ["AuthenticationRateLimit:DirectClientConnections"] = "true",
+                ["AuthenticationRateLimit:RetentionHours"] = "48"
             });
         });
 

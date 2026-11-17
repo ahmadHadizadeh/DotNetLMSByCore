@@ -13,6 +13,8 @@ using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +32,73 @@ builder.Services.AddRazorPages();
 // IOC
 builder.Services.AddTransient<UserPasswordHasher>();
 builder.Services.AddTransient<IUserService, Userservice>();
+
+// Login rate limiting uses a stable application secret to create non-reversible account/IP keys.
+var loginRateLimitOptions = builder.Configuration
+    .GetSection(LoginRateLimitOptions.SectionName)
+    .Get<LoginRateLimitOptions>() ?? new LoginRateLimitOptions();
+
+builder.Services
+    .AddOptions<LoginRateLimitOptions>()
+    .Bind(builder.Configuration.GetSection(LoginRateLimitOptions.SectionName))
+    .Validate(options =>
+    {
+        try
+        {
+            return Convert.FromBase64String(options.KeyPepper).Length >= 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }, "AuthenticationRateLimit:KeyPepper must be a Base64-encoded secret of at least 32 bytes.")
+    .Validate(options =>
+        options.AccountFailureThreshold > 0
+        && options.AccountWindowMinutes > 0
+        && options.AccountBaseCooldownMinutes > 0
+        && options.AccountMaxCooldownMinutes >= options.AccountBaseCooldownMinutes
+        && options.IpFailureThreshold > 0
+        && options.IpWindowMinutes > 0
+        && options.IpCooldownMinutes > 0
+        && options.RetentionHours >= 1,
+        "Authentication rate-limit thresholds and durations must be positive and internally consistent.")
+    .ValidateOnStart();
+
+var trustedProxyAddresses = new List<IPAddress>();
+foreach (var proxyValue in loginRateLimitOptions.TrustedProxies)
+{
+    if (!IPAddress.TryParse(proxyValue, out var proxyAddress))
+    {
+        throw new InvalidOperationException(
+            $"AuthenticationRateLimit:TrustedProxies contains an invalid IP address: '{proxyValue}'.");
+    }
+
+    trustedProxyAddresses.Add(proxyAddress);
+}
+
+if (loginRateLimitOptions.EnableIpRateLimit
+    && trustedProxyAddresses.Count == 0
+    && !loginRateLimitOptions.DirectClientConnections)
+{
+    throw new InvalidOperationException(
+        "EnableIpRateLimit requires trusted proxy addresses or an explicit DirectClientConnections=true setting.");
+}
+
+if (loginRateLimitOptions.EnableIpRateLimit && trustedProxyAddresses.Count > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+        foreach (var proxyAddress in trustedProxyAddresses)
+        {
+            options.KnownProxies.Add(proxyAddress);
+        }
+    });
+}
+
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddScoped<IAuthenticationRateLimiter, AuthenticationRateLimiter>();
+builder.Services.AddHostedService<AuthenticationRateLimitCleanupService>();
 builder.Services.AddTransient<IViewRenderService, RenderViewToString>();
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 builder.Services.AddTransient<IPermissionService, PermissionService>();
@@ -136,6 +205,13 @@ builder.Services.Configure<FormOptions>(options =>
 var app = builder.Build();
 
 #region Middleware
+
+// Resolve client IPs only through explicitly configured trusted proxies.
+// Without that configuration, forwarded headers are ignored.
+if (loginRateLimitOptions.EnableIpRateLimit && trustedProxyAddresses.Count > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 // Redirect browser-facing HTML 404 responses to the legacy error page.
 // Preserve the actual 404 status for JSON/XHR and other non-HTML clients.

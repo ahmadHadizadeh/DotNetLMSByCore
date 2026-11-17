@@ -21,11 +21,16 @@ namespace Core.Services
     {
         private readonly AsanwebContext _context;
         private readonly UserPasswordHasher _passwordHasher;
+        private readonly IAuthenticationRateLimiter _authenticationRateLimiter;
 
-        public Userservice(AsanwebContext context, UserPasswordHasher passwordHasher)
+        public Userservice(
+            AsanwebContext context,
+            UserPasswordHasher passwordHasher,
+            IAuthenticationRateLimiter authenticationRateLimiter)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _authenticationRateLimiter = authenticationRateLimiter;
         }
 
         public bool IsExistUserName(string userName)
@@ -248,7 +253,13 @@ namespace Core.Services
                     .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
 
             // The conditional UPDATE is the single-use boundary under concurrent requests.
-            return updatedRows == 1;
+            if (updatedRows != 1)
+            {
+                return false;
+            }
+
+            _authenticationRateLimiter.ClearAccountAfterSuccessfulPasswordReset(user.Email);
+            return true;
         }
 
         private static string? GetPasswordResetTokenHash(string token)

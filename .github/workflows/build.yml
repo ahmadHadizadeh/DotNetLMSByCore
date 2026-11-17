@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/platform-baseline-and-media-security
+      - feature/login-rate-limiting
   pull_request:
     branches:
       - main
