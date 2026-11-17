@@ -80,6 +80,10 @@ public class AsanwebContext : DbContext
             .IsUnique()
             .HasFilter("[PasswordResetTokenHash] IS NOT NULL");
 
+        modelBuilder.Entity<Users>()
+            .Property(user => user.SessionVersion)
+            .HasDefaultValue(0);
+
         #region code for Delete problem FK_Table
 
         var cascadeFKs = modelBuilder.Model.GetEntityTypes()

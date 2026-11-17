@@ -109,6 +109,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         Assert.Equal(PasswordVerificationResult.Failed, hasher.VerifyPassword(persisted, persisted.Password, InitialPassword));
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
+        Assert.Equal(1, persisted.SessionVersion);
         Assert.Equal(user.ActiveCode, persisted.ActiveCode);
     }
 
@@ -128,6 +129,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
+        Assert.Equal(1, persisted.SessionVersion);
     }
 
     [Fact]
@@ -154,6 +156,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
+        Assert.Equal(1, persisted.SessionVersion);
     }
 
     [Fact]

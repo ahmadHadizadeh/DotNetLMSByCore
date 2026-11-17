@@ -8,7 +8,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Asancode.Tests.Infrastructure;
+using Core.DTO;
 using Core.Security;
+using Core.Services.Interfaces;
 using DataLayer.Context;
 using DataLayer.Entities.User;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -363,6 +365,144 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
     }
 
     [Fact]
+    public async Task Password_change_revokes_all_previously_issued_sessions()
+    {
+        var user = await SeedUserAsync();
+        using var firstClient = CreateClient();
+        using var secondClient = CreateClient();
+        await SignInAsync(firstClient, user);
+        await SignInAsync(secondClient, user);
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            userService.ChangePassword(user.UserName, "Changed-Password-2026!");
+        }
+
+        await AssertSessionRevokedAsync(firstClient);
+        await AssertSessionRevokedAsync(secondClient);
+
+        await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var persisted = await db.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.Equal(1, persisted.SessionVersion);
+    }
+
+    [Fact]
+    public async Task Password_reset_http_flow_revokes_the_cookie_that_was_used_to_submit_it()
+    {
+        var user = await SeedUserAsync();
+        using var client = CreateClient();
+        await SignInAsync(client, user);
+
+        string resetToken;
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            resetToken = userService.CreatePasswordResetToken(user.UserId);
+        }
+
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(
+            client,
+            "/Account/ResetPassword/" + resetToken);
+
+        using var resetResponse = await client.PostAsync(
+            "/Account/ResetPassword",
+            CreateForm(
+                ("ResetToken", resetToken),
+                ("Password", "Reset-Password-2026!"),
+                ("RePassword", "Reset-Password-2026!"),
+                ("__RequestVerificationToken", antiforgeryToken)),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, resetResponse.StatusCode);
+
+        await AssertSessionRevokedAsync(client);
+
+        await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var persisted = await db.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.Equal(1, persisted.SessionVersion);
+        Assert.Null(persisted.PasswordResetTokenHash);
+    }
+
+    [Fact]
+    public async Task Admin_password_change_revokes_existing_user_sessions()
+    {
+        var user = await SeedUserAsync();
+        using var client = CreateClient();
+        await SignInAsync(client, user);
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            userService.EditUserForAdmin(new EditAdminViewModel
+            {
+                UserId = user.UserId,
+                Email = user.Email,
+                Password = "Admin-Changed-Password-2026!",
+                ImageName = user.UserImage,
+                UserImage = null!,
+                UserRole = new System.Collections.Generic.List<int>()
+            });
+        }
+
+        await AssertSessionRevokedAsync(client);
+
+        await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var persisted = await db.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.Equal(1, persisted.SessionVersion);
+    }
+
+    [Fact]
+    public async Task Deactivation_and_reactivation_cannot_restore_a_previously_issued_cookie()
+    {
+        var user = await SeedUserAsync();
+        using var client = CreateClient();
+        await SignInAsync(client, user);
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            Assert.True(userService.SetUserActiveStatus(user.UserId, false));
+        }
+
+        await AssertSessionRevokedAsync(client);
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            Assert.True(userService.SetUserActiveStatus(user.UserId, true));
+        }
+
+        using var afterReactivation = await client.GetAsync(
+            "/Login",
+            TestContext.Current.CancellationToken);
+        var html = await afterReactivation.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.DoesNotContain("شما با موفقیت وارد سایت شدید", html);
+    }
+
+    [Fact]
+    public async Task Soft_deleting_an_account_revokes_its_existing_cookie()
+    {
+        var user = await SeedUserAsync();
+        using var client = CreateClient();
+        await SignInAsync(client, user);
+
+        await using (var scope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+            userService.DeleteUser(user.UserId);
+        }
+
+        await AssertSessionRevokedAsync(client);
+    }
+
+    [Fact]
     public void Application_cookie_has_explicit_secure_settings_and_bounded_lifetime()
     {
         var options = fixture.Factory.Services
@@ -390,6 +530,35 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
             MediaTestAuthenticationHandler.UseRealCookieHeaderName,
             "true");
         return client;
+    }
+
+    private async Task SignInAsync(HttpClient client, Users user)
+    {
+        var antiforgeryToken = await GetAntiforgeryTokenAsync(client, "/Login");
+        using var response = await client.PostAsync(
+            "/login",
+            CreateForm(
+                ("Email", user.Email),
+                ("Password", "Initial-Password-2026!"),
+                ("__RequestVerificationToken", antiforgeryToken)),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        AssertApplicationCookieIsSecure(response, isPersistent: false);
+    }
+
+    private static async Task AssertSessionRevokedAsync(HttpClient client)
+    {
+        using var response = await client.GetAsync(
+            "/Login",
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.DoesNotContain("شما با موفقیت وارد سایت شدید", html);
+        Assert.True(
+            HasExpiredApplicationCookie(response),
+            "The application cookie must be expired when a stale session is rejected.");
     }
 
     private static FormUrlEncodedContent CreateForm(params (string Key, string Value)[] values) =>

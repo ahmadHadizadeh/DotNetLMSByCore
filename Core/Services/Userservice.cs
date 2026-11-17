@@ -121,7 +121,34 @@ namespace Core.Services
             if (user == null || user.IsActive)
                 return false;
             user.IsActive = true;
+            user.SessionVersion = checked(user.SessionVersion + 1);
             user.ActiveCode = CreateUniqCode.buildUniqCod();
+            _context.SaveChanges();
+            return true;
+        }
+
+        public bool SetUserActiveStatus(int userId, bool isActive)
+        {
+            var user = _context.Users.SingleOrDefault(existingUser => existingUser.UserId == userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            if (user.IsActive == isActive)
+            {
+                return true;
+            }
+
+            user.IsActive = isActive;
+            user.SessionVersion = checked(user.SessionVersion + 1);
+
+            if (!isActive)
+            {
+                user.PasswordResetTokenHash = null;
+                user.PasswordResetTokenExpiresAt = null;
+            }
+
             _context.SaveChanges();
             return true;
         }
@@ -157,7 +184,9 @@ namespace Core.Services
 
             var utcNow = DateTime.UtcNow;
             return _context.Users.AsNoTracking().Any(user =>
-                user.PasswordResetTokenHash == tokenHash && user.PasswordResetTokenExpiresAt > utcNow);
+                user.IsActive
+                && user.PasswordResetTokenHash == tokenHash
+                && user.PasswordResetTokenExpiresAt > utcNow);
         }
 
         public bool TryResetPassword(string token, string newPassword)
@@ -175,7 +204,8 @@ namespace Core.Services
 
             var utcNow = DateTime.UtcNow;
             var user = _context.Users.AsNoTracking().SingleOrDefault(existingUser =>
-                existingUser.PasswordResetTokenHash == tokenHash
+                existingUser.IsActive
+                && existingUser.PasswordResetTokenHash == tokenHash
                 && existingUser.PasswordResetTokenExpiresAt > utcNow);
 
             if (user == null)
@@ -186,12 +216,14 @@ namespace Core.Services
             var newPasswordHash = _passwordHasher.HashPassword(user, newPassword);
             var updatedRows = _context.Users
                 .Where(existingUser => existingUser.UserId == user.UserId
+                    && existingUser.IsActive
                     && existingUser.PasswordResetTokenHash == tokenHash
                     && existingUser.PasswordResetTokenExpiresAt > utcNow)
                 .ExecuteUpdate(setters => setters
                     .SetProperty(existingUser => existingUser.Password, newPasswordHash)
                     .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
-                    .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null));
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null)
+                    .SetProperty(existingUser => existingUser.SessionVersion, existingUser => existingUser.SessionVersion + 1));
 
             // The conditional UPDATE is the single-use boundary under concurrent requests.
             return updatedRows == 1;
@@ -334,6 +366,7 @@ namespace Core.Services
             user.Password = _passwordHasher.HashPassword(user, newPassword);
             user.PasswordResetTokenHash = null;
             user.PasswordResetTokenExpiresAt = null;
+            user.SessionVersion = checked(user.SessionVersion + 1);
             UpdateUser(user);
         }
 
@@ -514,6 +547,7 @@ namespace Core.Services
                 user.Password = _passwordHasher.HashPassword(user, editAdmin.Password);
                 user.PasswordResetTokenHash = null;
                 user.PasswordResetTokenExpiresAt = null;
+                user.SessionVersion = checked(user.SessionVersion + 1);
             }
 
             #region Edit ImageUser
@@ -552,8 +586,16 @@ namespace Core.Services
 
         public void DeleteUser(int userId)
         {
-            Users user = GetUserByUserId(userId);
+            var user = GetUserByUserId(userId);
+            if (user == null)
+            {
+                throw new InvalidOperationException("Cannot delete a user that does not exist.");
+            }
+
             user.IsDelete = true;
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetTokenExpiresAt = null;
+            user.SessionVersion = checked(user.SessionVersion + 1);
             UpdateUser(user);
         }
 

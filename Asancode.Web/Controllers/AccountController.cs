@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -127,8 +128,9 @@ namespace Asancode.Web.Controllers
 
             var claims = new List<Claim>
             {
-                new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new(ClaimTypes.Name, user.UserName)
+                new(ClaimTypes.NameIdentifier, user.UserId.ToString(CultureInfo.InvariantCulture)),
+                new(ClaimTypes.Name, user.UserName),
+                new(UserSessionClaims.SessionVersion, user.SessionVersion.ToString(CultureInfo.InvariantCulture))
             };
 
             var identity = new ClaimsIdentity(
