@@ -15,6 +15,7 @@ namespace Core.Services.Interfaces
         string HashPassword(Users user, string password);
         Users LoginUser(LoginViewModel login);
         bool ActiveCodeAccount(string activeCode);
+        bool SetUserActiveStatus(int userId, bool isActive);
         string CreatePasswordResetToken(int userId);
         bool IsPasswordResetTokenValid(string token);
         bool TryResetPassword(string token, string newPassword);

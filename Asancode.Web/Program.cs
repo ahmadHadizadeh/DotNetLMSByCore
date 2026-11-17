@@ -7,7 +7,10 @@ using Core.Security.Sender;
 using Core.Services;
 using Core.Services.Interfaces;
 using DataLayer.Context;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -86,6 +89,38 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.IsEssential = true;
+
+    // Validate every authenticated request against the current database session version.
+    // This gives immediate, cross-instance revocation without relying on an in-memory cache.
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnValidatePrincipal = async context =>
+        {
+            var userIdValue = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var sessionVersionValue = context.Principal?.FindFirst(UserSessionClaims.SessionVersion)?.Value;
+
+            if (!int.TryParse(userIdValue, NumberStyles.None, CultureInfo.InvariantCulture, out var userId)
+                || !int.TryParse(sessionVersionValue, NumberStyles.None, CultureInfo.InvariantCulture, out var sessionVersion))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return;
+            }
+
+            var dbContext = context.HttpContext.RequestServices.GetRequiredService<AsanwebContext>();
+            var currentSessionVersion = await dbContext.Users
+                .AsNoTracking()
+                .Where(user => user.UserId == userId && user.IsActive)
+                .Select(user => (int?)user.SessionVersion)
+                .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
+
+            if (currentSessionVersion != sessionVersion)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        }
+    };
 });
 
 // Form limits
