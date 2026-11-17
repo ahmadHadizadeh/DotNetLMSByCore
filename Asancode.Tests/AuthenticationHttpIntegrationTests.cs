@@ -407,7 +407,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
     {
         var match = Regex.Match(
             html,
-            "<span[^>]*data-valmsg-for=\\\"Email\\\"[^>]*>(?<message>.*?)</span>",
+            @"<span[^>]*data-valmsg-for=""Email""[^>]*>(?<message>.*?)</span>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         Assert.True(match.Success, "The login form must render its email validation message.");
