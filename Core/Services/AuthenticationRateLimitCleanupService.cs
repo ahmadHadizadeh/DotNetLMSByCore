@@ -11,12 +11,12 @@ namespace Core.Services;
 public sealed class AuthenticationRateLimitCleanupService(
     IServiceScopeFactory scopeFactory,
     IOptions<LoginRateLimitOptions> options,
-    ILogger<AuthenticationRateLimitCleanupService> logger) : BackgroundService
+    ILogger<AuthenticationRateLimitCleanupService> logger,
+    TimeProvider timeProvider) : BackgroundService
 {
-    private readonly TimeSpan _interval = TimeSpan.FromMinutes(5);
-    private readonly TimeSpan _retention = TimeSpan.FromHours(options.Value.RetentionHours);
-    private readonly TimeSpan _accountWindow = TimeSpan.FromMinutes(options.Value.AccountWindowMinutes);
-    private readonly TimeSpan _ipWindow = TimeSpan.FromMinutes(options.Value.IpWindowMinutes);
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(5);
+    private readonly LoginRateLimitOptions _options = options.Value;
+    private readonly TimeProvider _timeProvider = timeProvider;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -26,7 +26,7 @@ public sealed class AuthenticationRateLimitCleanupService(
             {
                 // Delay the first cleanup until after startup. This avoids a database
                 // connection during startup in endpoints that intentionally run DB-free.
-                await Task.Delay(_interval, stoppingToken);
+                await Task.Delay(CleanupInterval, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -35,26 +35,7 @@ public sealed class AuthenticationRateLimitCleanupService(
 
             try
             {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var context = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
-                var now = DateTime.UtcNow;
-                var retentionCutoff = now.Subtract(_retention);
-                var accountWindowCutoff = now.Subtract(_accountWindow);
-                var ipWindowCutoff = now.Subtract(_ipWindow);
-
-                await context.AuthenticationRateLimitEntries
-                    .Where(entry =>
-                        // Failed-attempt-only buckets are disposable as soon as their
-                        // observation window has elapsed; this bounds attacker-created keys.
-                        (entry.ConsecutiveLockouts == 0
-                            && entry.BlockedUntilUtc == null
-                            && ((entry.Scope == 1 && entry.LastAttemptUtc < accountWindowCutoff)
-                                || (entry.Scope == 2 && entry.LastAttemptUtc < ipWindowCutoff)))
-                        // Keep escalation history for a bounded period, but never remove
-                        // an active cooldown before it expires.
-                        || (entry.LastAttemptUtc < retentionCutoff
-                            && (entry.BlockedUntilUtc == null || entry.BlockedUntilUtc <= now)))
-                    .ExecuteDeleteAsync(stoppingToken);
+                await CleanupExpiredEntriesAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -68,7 +49,52 @@ public sealed class AuthenticationRateLimitCleanupService(
                     exception,
                     "Authentication rate-limit cleanup failed; expired entries will be retried later.");
             }
-
         }
+    }
+
+    public async Task<int> CleanupExpiredEntriesAsync(CancellationToken cancellationToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var retentionCutoff = now.Subtract(TimeSpan.FromHours(_options.RetentionHours));
+        var accountWindowCutoff = now.Subtract(TimeSpan.FromMinutes(_options.AccountWindowMinutes));
+        var ipWindowCutoff = now.Subtract(TimeSpan.FromMinutes(_options.IpWindowMinutes));
+        var totalDeleted = 0;
+
+        // Every DELETE is its own short statement/transaction. TOP bounds the rows
+        // affected per statement, while MaxBatchesPerRun bounds total cleanup work.
+        for (var batch = 0; batch < _options.CleanupMaxBatchesPerRun; batch++)
+        {
+            var deleted = await context.Database.ExecuteSqlAsync($"""
+                DELETE TOP ({_options.CleanupBatchSize})
+                FROM [dbo].[AuthenticationRateLimitEntries]
+                WHERE
+                    (
+                        [ConsecutiveLockouts] = 0
+                        AND [BlockedUntilUtc] IS NULL
+                        AND
+                        (
+                            ([Scope] = 1 AND [LastAttemptUtc] < {accountWindowCutoff})
+                            OR ([Scope] = 2 AND [LastAttemptUtc] < {ipWindowCutoff})
+                        )
+                    )
+                    OR
+                    (
+                        [LastAttemptUtc] < {retentionCutoff}
+                        AND ([BlockedUntilUtc] IS NULL OR [BlockedUntilUtc] <= {now})
+                    )
+                """, cancellationToken);
+
+            totalDeleted += deleted;
+
+            if (deleted < _options.CleanupBatchSize)
+            {
+                break;
+            }
+        }
+
+        return totalDeleted;
     }
 }
