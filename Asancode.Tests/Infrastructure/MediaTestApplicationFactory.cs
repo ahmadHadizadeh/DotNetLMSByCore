@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Asancode.Tests.Infrastructure;
 
-public sealed class MediaTestApplicationFactory(string connectionString)
+public sealed class MediaTestApplicationFactory(string connectionString, int maxAccountBuckets = 10_000)
     : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -30,6 +31,8 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 ["Authentication:Facebook:AppSecret"] = "integration-test-secret",
                 ["MediaUpload:MaxArchiveBytes"] = "2048",
                 ["AuthenticationRateLimit:KeyPepper"] = "dGVzdC1rZXktcGVwcGVyLWZvci1pbnRlZ3JhdGlvbi10ZXN0cy0yMDI2LTMyLWJ5dGVz",
+                ["AuthenticationRateLimit:MaxAccountBuckets"] = maxAccountBuckets.ToString(CultureInfo.InvariantCulture),
+                ["AuthenticationRateLimit:AccountBucketCapacityRetryMinutes"] = "1",
                 ["AuthenticationRateLimit:AccountFailureThreshold"] = "8",
                 ["AuthenticationRateLimit:AccountWindowMinutes"] = "15",
                 ["AuthenticationRateLimit:AccountBaseCooldownMinutes"] = "1",
