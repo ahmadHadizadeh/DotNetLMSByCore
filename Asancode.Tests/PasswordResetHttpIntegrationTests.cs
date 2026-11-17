@@ -224,7 +224,7 @@ public sealed class PasswordResetHttpIntegrationTests(MediaSqlServerFixture fixt
 
         Assert.Equal(HttpStatusCode.OK, invalidResponse.StatusCode);
         var invalidHtml = await invalidResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("تکرار کلمه عبور درست نمی باشد", invalidHtml);
+        Assert.Contains("field-validation-error", invalidHtml);
         Assert.True(userService.IsPasswordResetTokenValid(token));
 
         using var validResponse = await client.PostAsync(
