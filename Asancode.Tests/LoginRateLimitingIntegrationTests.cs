@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Asancode.Tests.Infrastructure;
 using Core.Security;
+using Core.Services;
 using Core.Services.Interfaces;
 using DataLayer.Context;
 using DataLayer.Entities.User;
