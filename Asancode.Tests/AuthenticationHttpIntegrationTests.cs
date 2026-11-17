@@ -86,13 +86,11 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.Contains("SeuccessRegister", response.RequestMessage?.RequestUri?.ToString() ?? string.Empty,
-            StringComparison.OrdinalIgnoreCase);
-
-        var email = Assert.Single(emailSender.Messages);
-        Assert.Equal($"register-{id}@example.test", email.To);
-        Assert.Equal("ایمیل فعال سازی", email.Subject);
-        Assert.Contains("ActiveCode", email.Body, StringComparison.OrdinalIgnoreCase);
+        var activationEmail = Assert.Single(emailSender.Messages);
+        Assert.Equal(email, activationEmail.To);
+        Assert.Equal("ایمیل فعال سازی", activationEmail.Subject);
+        Assert.Contains($"/Account/ActiveCode/", activationEmail.Body);
+        Assert.Contains("ثبت نام شما با موفقیت انجام گرفت", html);
 
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
@@ -102,9 +100,11 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.False(user.IsActive);
         Assert.False(user.IsDelete);
         Assert.NotEqual("Register-Password-2026!", user.Password);
-        Assert.DoesNotContain(
-            response.Headers.TryGetValues("Set-Cookie", out var cookies) ? cookies : Array.Empty<string>(),
-            cookie => cookie.StartsWith(".AsanCode.Authentication=", StringComparison.OrdinalIgnoreCase));
+        Assert.False(
+            response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            && cookies.Any(cookie => cookie.StartsWith(
+                ".AsanCode.Authentication=",
+                StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
