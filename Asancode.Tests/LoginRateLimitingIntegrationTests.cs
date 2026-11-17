@@ -45,7 +45,7 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
                 Assert.InRange(retryAfter, 1, 60);
 
                 var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-                Assert.Contains("برای محافظت از حساب شما، ورود موقتاً متوقف شده است.", html);
+                Assert.Contains("به‌دلیل تلاش‌های ناموفق اخیر، امکان ورود موقتاً محدود شده است.", html);
                 Assert.Contains("id=\"login-rate-limit-countdown\"", html);
                 Assert.Contains("data-seconds=\"" + retryAfter + "\"", html);
                 Assert.Contains("performance.now()", html);
