@@ -326,6 +326,40 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
     }
 
     [Fact]
+    public async Task User_profile_and_password_change_posts_require_antiforgery_for_authenticated_sessions()
+    {
+        var user = await SeedUserAsync();
+        using var client = CreateClient();
+        var loginToken = await GetAntiforgeryTokenAsync(client, "/Login");
+
+        using var loginResponse = await client.PostAsync(
+            "/login",
+            CreateForm(
+                ("Email", user.Email),
+                ("Password", "Initial-Password-2026!"),
+                ("__RequestVerificationToken", loginToken)),
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, loginResponse.StatusCode);
+
+        using var profileResponse = await client.PostAsync(
+            "/UserPanel/EditProfile",
+            CreateForm(
+                ("UserName", user.UserName),
+                ("Email", user.Email)),
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, profileResponse.StatusCode);
+
+        using var passwordResponse = await client.PostAsync(
+            "/UserPanel/ChangePassword",
+            CreateForm(
+                ("OldPassword", "Initial-Password-2026!"),
+                ("Password", "New-Password-2026!"),
+                ("RePassword", "New-Password-2026!")),
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, passwordResponse.StatusCode);
+    }
+
+    [Fact]
     public void Application_cookie_has_explicit_secure_settings_and_bounded_lifetime()
     {
         var options = fixture.Factory.Services
