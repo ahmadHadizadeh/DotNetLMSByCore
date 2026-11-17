@@ -156,6 +156,21 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
                 Assert.False(unregisteredStatus.IsLimited);
             }
 
+            // The capacity gate must not block a registered user with valid credentials.
+            using (var validClient = CreateClient(factory))
+            {
+                var validAntiforgeryToken = await GetAntiforgeryTokenAsync(validClient);
+                using var validResponse = await validClient.PostAsync(
+                    "/login",
+                    CreateForm(
+                        ("Email", registeredUser.Email),
+                        ("Password", "Initial-Password-2026!"),
+                        ("__RequestVerificationToken", validAntiforgeryToken)),
+                    TestContext.Current.CancellationToken);
+
+                Assert.Equal(HttpStatusCode.Redirect, validResponse.StatusCode);
+            }
+
             using var client = CreateClient(factory);
             var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
 
