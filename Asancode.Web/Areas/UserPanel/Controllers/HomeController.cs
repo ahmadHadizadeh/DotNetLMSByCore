@@ -1,4 +1,5 @@
-﻿using Core.DTO;
+﻿using System.Threading.Tasks;
+using Core.DTO;
 using Core.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -46,7 +47,8 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
 
         [Route("UserPanel/EditProfile")]
         [HttpPost]
-        public IActionResult EditProfile(EditProfileViewModel profile)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProfile(EditProfileViewModel profile)
         {
             if (!ModelState.IsValid)
             {
@@ -54,7 +56,7 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             }
             _userService.EditUser(User.Identity.Name, profile);
             //Logout
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Redirect("/Login?EditProfile=True");
         }
 
@@ -69,6 +71,7 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
         }
         [Route("UserPanel/ChangePassword")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult ChangePassword(ChangPasswordviewModel chang)
         {
             string CurrentUser = User.Identity.Name;
