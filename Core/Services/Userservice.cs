@@ -12,6 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Core.Services
 {
@@ -122,6 +124,92 @@ namespace Core.Services
             user.ActiveCode = CreateUniqCode.buildUniqCod();
             _context.SaveChanges();
             return true;
+        }
+
+        private const int PasswordResetTokenLifetimeHours = 6;
+
+        public string CreatePasswordResetToken(int userId)
+        {
+            var user = _context.Users.SingleOrDefault(existingUser => existingUser.UserId == userId);
+            if (user == null)
+            {
+                throw new InvalidOperationException("Cannot issue a password reset token for a missing user.");
+            }
+
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+
+            user.PasswordResetTokenHash = ComputePasswordResetTokenHash(token);
+            user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(PasswordResetTokenLifetimeHours);
+            _context.SaveChanges();
+            return token;
+        }
+
+        public bool IsPasswordResetTokenValid(string token)
+        {
+            var tokenHash = GetPasswordResetTokenHash(token);
+            if (tokenHash == null)
+            {
+                return false;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            return _context.Users.AsNoTracking().Any(user =>
+                user.PasswordResetTokenHash == tokenHash && user.PasswordResetTokenExpiresAt > utcNow);
+        }
+
+        public bool TryResetPassword(string token, string newPassword)
+        {
+            if (string.IsNullOrEmpty(newPassword))
+            {
+                return false;
+            }
+
+            var tokenHash = GetPasswordResetTokenHash(token);
+            if (tokenHash == null)
+            {
+                return false;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var user = _context.Users.AsNoTracking().SingleOrDefault(existingUser =>
+                existingUser.PasswordResetTokenHash == tokenHash
+                && existingUser.PasswordResetTokenExpiresAt > utcNow);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            var newPasswordHash = _passwordHasher.HashPassword(user, newPassword);
+            var updatedRows = _context.Users
+                .Where(existingUser => existingUser.UserId == user.UserId
+                    && existingUser.PasswordResetTokenHash == tokenHash
+                    && existingUser.PasswordResetTokenExpiresAt > utcNow)
+                .ExecuteUpdate(setters => setters
+                    .SetProperty(existingUser => existingUser.Password, newPasswordHash)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null));
+
+            // The conditional UPDATE is the single-use boundary under concurrent requests.
+            return updatedRows == 1;
+        }
+
+        private static string? GetPasswordResetTokenHash(string token)
+        {
+            if (string.IsNullOrEmpty(token) || token.Length != 43)
+            {
+                return null;
+            }
+
+            return ComputePasswordResetTokenHash(token);
+        }
+
+        private static string ComputePasswordResetTokenHash(string token)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
         }
 
         public Users GetUserByEmail(string email)
@@ -244,6 +332,8 @@ namespace Core.Services
             }
 
             user.Password = _passwordHasher.HashPassword(user, newPassword);
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetTokenExpiresAt = null;
             UpdateUser(user);
         }
 
@@ -422,6 +512,8 @@ namespace Core.Services
             if (!string.IsNullOrEmpty(editAdmin.Password))
             {
                 user.Password = _passwordHasher.HashPassword(user, editAdmin.Password);
+                user.PasswordResetTokenHash = null;
+                user.PasswordResetTokenExpiresAt = null;
             }
 
             #region Edit ImageUser

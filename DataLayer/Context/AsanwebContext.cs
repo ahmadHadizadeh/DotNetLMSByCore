@@ -75,6 +75,11 @@ public class AsanwebContext : DbContext
 
         #endregion IsDelete
 
+        modelBuilder.Entity<Users>()
+            .HasIndex(user => user.PasswordResetTokenHash)
+            .IsUnique()
+            .HasFilter("[PasswordResetTokenHash] IS NOT NULL");
+
         #region code for Delete problem FK_Table
 
         var cascadeFKs = modelBuilder.Model.GetEntityTypes()

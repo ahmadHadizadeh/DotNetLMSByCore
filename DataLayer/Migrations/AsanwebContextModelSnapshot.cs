@@ -806,6 +806,13 @@ namespace DataLayer.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<DateTime?>("PasswordResetTokenExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordResetTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<DateTime>("RegisterDate")
                         .HasColumnType("datetime2");
 
@@ -820,6 +827,10 @@ namespace DataLayer.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("PasswordResetTokenHash")
+                        .IsUnique()
+                        .HasFilter("[PasswordResetTokenHash] IS NOT NULL");
 
                     b.ToTable("Users");
                 });

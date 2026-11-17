@@ -53,9 +53,16 @@ namespace Core.DTO
         public string Email { get; set; }
     }
 
+    public class PasswordResetEmailViewModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string ResetToken { get; set; } = string.Empty;
+    }
+
     public class ResetPasswordViewModel
     {
-        public string ActiveCode { get; set; }
+        [Required]
+        public string ResetToken { get; set; } = string.Empty;
         [Display(Name = "کلمه عبور")]
         [DataType(DataType.Password)]
         [Required(ErrorMessage = "لطفا {0} را وارد کنید")]

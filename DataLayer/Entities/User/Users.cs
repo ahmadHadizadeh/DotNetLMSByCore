@@ -42,6 +42,11 @@ namespace DataLayer.Entities.User
         [MaxLength(50, ErrorMessage = "{0} نمی تواند بیشتر از {1} کاراکتر باشد .")]
         public string ActiveCode { get; set; }
 
+        [MaxLength(64)]
+        public string? PasswordResetTokenHash { get; set; }
+
+        public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
         [Display(Name = "تاریخ")]
         public DateTime RegisterDate { get; set; }
 
