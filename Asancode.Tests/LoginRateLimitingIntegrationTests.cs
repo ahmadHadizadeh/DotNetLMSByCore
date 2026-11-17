@@ -117,6 +117,98 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
     }
 
     [Fact]
+    public async Task Account_bucket_capacity_is_bounded_and_does_not_disclose_account_existence()
+    {
+        // This test uses an isolated low cap to prove the admission gate is shared by
+        // registered and unregistered identifiers without relying on account lookup.
+        await using (var resetScope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var resetDb = resetScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            await resetDb.AuthenticationRateLimitEntries
+                .ExecuteDeleteAsync(TestContext.Current.CancellationToken);
+        }
+
+        using var factory = new MediaTestApplicationFactory(
+            fixture.ConnectionString,
+            maxAccountBuckets: 2);
+
+        try
+        {
+            var registeredUser = await SeedUserAsync(factory);
+
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var limiter = scope.ServiceProvider.GetRequiredService<IAuthenticationRateLimiter>();
+
+                Assert.False(limiter.RecordFailedAttempt("capacity-one@example.test", null).IsLimited);
+                Assert.False(limiter.RecordFailedAttempt("capacity-two@example.test", null).IsLimited);
+
+                // The third distinct identifier cannot create another persisted bucket.
+                Assert.True(
+                    limiter.RecordFailedAttempt("capacity-overflow@example.test", null).IsLimited);
+
+                var registeredStatus = limiter.GetStatus(registeredUser.Email, null);
+                var unregisteredStatus = limiter.GetStatus("not-registered@example.test", null);
+
+                Assert.True(registeredStatus.IsLimited);
+                Assert.True(unregisteredStatus.IsLimited);
+                Assert.InRange(registeredStatus.RetryAfterSeconds, 1, 60);
+                Assert.InRange(unregisteredStatus.RetryAfterSeconds, 1, 60);
+            }
+
+            using var client = CreateClient(factory);
+            var antiforgeryToken = await GetAntiforgeryTokenAsync(client);
+
+            using var registeredResponse = await client.PostAsync(
+                "/login",
+                CreateForm(
+                    ("Email", registeredUser.Email),
+                    ("Password", "Initial-Password-2026!"),
+                    ("__RequestVerificationToken", antiforgeryToken)),
+                TestContext.Current.CancellationToken);
+
+            using var unregisteredResponse = await client.PostAsync(
+                "/login",
+                CreateForm(
+                    ("Email", "not-registered@example.test"),
+                    ("Password", "Wrong-Password-2026!"),
+                    ("__RequestVerificationToken", antiforgeryToken)),
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.TooManyRequests, registeredResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.TooManyRequests, unregisteredResponse.StatusCode);
+
+            var registeredHtml = await registeredResponse.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken);
+            var unregisteredHtml = await unregisteredResponse.Content.ReadAsStringAsync(
+                TestContext.Current.CancellationToken);
+
+            const string genericMessage =
+                "به‌دلیل تلاش‌های ناموفق اخیر، امکان ورود موقتاً محدود شده است.";
+
+            Assert.Contains(genericMessage, registeredHtml);
+            Assert.Contains(genericMessage, unregisteredHtml);
+
+            await using var verifyScope = factory.Services.CreateAsyncScope();
+            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            var accountBucketCount = await verifyDb.AuthenticationRateLimitEntries
+                .CountAsync(entry => entry.Scope == 1, TestContext.Current.CancellationToken);
+            var capacityGateCount = await verifyDb.AuthenticationRateLimitEntries
+                .CountAsync(entry => entry.Scope == 3, TestContext.Current.CancellationToken);
+
+            Assert.Equal(2, accountBucketCount);
+            Assert.Equal(1, capacityGateCount);
+        }
+        finally
+        {
+            await using var cleanupScope = fixture.Factory.Services.CreateAsyncScope();
+            var cleanupDb = cleanupScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            await cleanupDb.AuthenticationRateLimitEntries
+                .ExecuteDeleteAsync(TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Cleanup_deletes_expired_entries_in_bounded_batches_and_preserves_active_cooldowns()
     {
         const int batchSize = 10;
@@ -353,9 +445,10 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
         Assert.False(limiter.GetStatus(user.Email, null).IsLimited);
     }
 
-    private HttpClient CreateClient()
+    private HttpClient CreateClient(MediaTestApplicationFactory? targetFactory = null)
     {
-        var client = fixture.Factory.CreateClient(new WebApplicationFactoryClientOptions
+        var selectedFactory = targetFactory ?? fixture.Factory;
+        var client = selectedFactory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
             BaseAddress = new Uri("https://localhost")
@@ -392,12 +485,15 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
             HMACSHA256.HashData(Convert.FromBase64String(testPepper), input));
     }
 
-    private async Task<Users> SeedUserAsync() =>
-        (await SeedUsersAsync(1))[0];
+    private async Task<Users> SeedUserAsync(MediaTestApplicationFactory? targetFactory = null) =>
+        (await SeedUsersAsync(1, targetFactory))[0];
 
-    private async Task<List<Users>> SeedUsersAsync(int count)
+    private async Task<List<Users>> SeedUsersAsync(
+        int count,
+        MediaTestApplicationFactory? targetFactory = null)
     {
-        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var selectedFactory = targetFactory ?? fixture.Factory;
+        await using var scope = selectedFactory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<UserPasswordHasher>();
         var users = new List<Users>(count);
