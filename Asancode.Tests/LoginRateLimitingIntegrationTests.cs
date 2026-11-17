@@ -177,7 +177,7 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
     }
 
     [Fact]
-    public async Task Successful_login_clears_both_account_and_ip_buckets()
+    public async Task Successful_login_clears_account_bucket_but_preserves_shared_ip_budget()
     {
         var user = await SeedUserAsync();
         var address = IPAddress.Parse("203.0.113.73");
@@ -191,9 +191,17 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
 
         Assert.True(limiter.GetStatus(user.Email, address).IsLimited);
 
-        limiter.ClearAfterSuccessfulLogin(user.Email, address);
+        limiter.ClearAccountAfterSuccessfulLogin(user.Email);
 
         Assert.False(limiter.GetStatus(user.Email, address).IsLimited);
+
+        // The successful account login must not erase the shared IP budget.
+        for (var attempt = 9; attempt <= 60; attempt++)
+        {
+            limiter.RecordFailedAttempt($"other-account-{attempt}@example.test", address);
+        }
+
+        Assert.True(limiter.GetStatus("unrelated-account@example.test", address).IsLimited);
     }
 
     [Fact]

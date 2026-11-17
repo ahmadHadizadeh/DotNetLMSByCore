@@ -164,7 +164,7 @@ namespace Asancode.Web.Controllers
                 IsPersistent = login.RememberMe
             };
 
-            _authenticationRateLimiter.ClearAfterSuccessfulLogin(login.Email, clientIpAddress);
+            _authenticationRateLimiter.ClearAccountAfterSuccessfulLogin(login.Email);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,

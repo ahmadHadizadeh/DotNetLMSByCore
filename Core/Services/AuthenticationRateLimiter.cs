@@ -112,11 +112,10 @@ public sealed class AuthenticationRateLimiter : IAuthenticationRateLimiter
         return CombineStatus(accountEntry, ipEntry, now);
     }
 
-    public void ClearAfterSuccessfulLogin(string email, IPAddress? clientIpAddress)
+    public void ClearAccountAfterSuccessfulLogin(string email)
     {
-        ClearEntries(
-            (AccountScope, CreateAccountKey(email)),
-            (IpScope, CreateIpKey(clientIpAddress)));
+        // A successful account login must not reset the independent shared IP budget.
+        ClearEntries((AccountScope, CreateAccountKey(email)));
     }
 
     public void ClearAccountAfterSuccessfulPasswordReset(string email)

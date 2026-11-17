@@ -13,7 +13,7 @@ public interface IAuthenticationRateLimiter
 
     LoginRateLimitStatus RecordFailedAttempt(string email, IPAddress? clientIpAddress);
 
-    void ClearAfterSuccessfulLogin(string email, IPAddress? clientIpAddress);
+    void ClearAccountAfterSuccessfulLogin(string email);
 
     void ClearAccountAfterSuccessfulPasswordReset(string email);
 }
