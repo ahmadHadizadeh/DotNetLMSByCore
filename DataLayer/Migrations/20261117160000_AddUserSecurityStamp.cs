@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataLayer.Migrations;
 
 [DbContext(typeof(AsanwebContext))]
-[Migration("20261117150000_AddUserSecurityStamp")]
+[Migration("20261117160000_AddUserSecurityStamp")]
 public partial class AddUserSecurityStamp : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,10 +18,21 @@ public partial class AddUserSecurityStamp : Migration
             type: "uniqueidentifier",
             nullable: false,
             defaultValueSql: "NEWID()");
+
+        migrationBuilder.DropColumn(
+            name: "SessionVersion",
+            table: "Users");
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.AddColumn<int>(
+            name: "SessionVersion",
+            table: "Users",
+            type: "int",
+            nullable: false,
+            defaultValue: 0);
+
         migrationBuilder.DropColumn(
             name: "SecurityStamp",
             table: "Users");
