@@ -90,17 +90,18 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.IsEssential = true;
 
-    // Validate every authenticated request against the current database session version.
-    // This gives immediate, cross-instance revocation without relying on an in-memory cache.
+    // Validate each cookie against the active account's current security stamp.
+    // Each security-sensitive update writes a fresh random stamp in the same SQL statement.
     options.Events = new CookieAuthenticationEvents
     {
         OnValidatePrincipal = async context =>
         {
             var userIdValue = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var sessionVersionValue = context.Principal?.FindFirst(UserSessionClaims.SessionVersion)?.Value;
+            var securityStampValue = context.Principal?.FindFirst(UserSessionClaims.SecurityStamp)?.Value;
 
             if (!int.TryParse(userIdValue, NumberStyles.None, CultureInfo.InvariantCulture, out var userId)
-                || !int.TryParse(sessionVersionValue, NumberStyles.None, CultureInfo.InvariantCulture, out var sessionVersion))
+                || !Guid.TryParseExact(securityStampValue, "N", out var securityStamp)
+                || securityStamp == Guid.Empty)
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -108,13 +109,13 @@ builder.Services.AddAuthentication(options =>
             }
 
             var dbContext = context.HttpContext.RequestServices.GetRequiredService<AsanwebContext>();
-            var currentSessionVersion = await dbContext.Users
+            var currentSecurityStamp = await dbContext.Users
                 .AsNoTracking()
                 .Where(user => user.UserId == userId && user.IsActive)
-                .Select(user => (int?)user.SessionVersion)
+                .Select(user => (Guid?)user.SecurityStamp)
                 .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
 
-            if (currentSessionVersion != sessionVersion)
+            if (currentSecurityStamp != securityStamp)
             {
                 context.RejectPrincipal();
                 await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

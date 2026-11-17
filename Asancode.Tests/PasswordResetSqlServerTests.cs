@@ -96,6 +96,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var hasher = scope.ServiceProvider.GetRequiredService<UserPasswordHasher>();
         var user = await AddUserAsync(dbContext, hasher);
+        var originalSecurityStamp = user.SecurityStamp;
         var token = userService.CreatePasswordResetToken(user.UserId);
         const string newPassword = "Replacement-Password-2026!";
 
@@ -109,7 +110,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         Assert.Equal(PasswordVerificationResult.Failed, hasher.VerifyPassword(persisted, persisted.Password, InitialPassword));
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
         Assert.Equal(user.ActiveCode, persisted.ActiveCode);
     }
 
@@ -120,6 +121,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var user = await AddUserAsync(dbContext, scope.ServiceProvider.GetRequiredService<UserPasswordHasher>());
+        var originalSecurityStamp = user.SecurityStamp;
         var token = userService.CreatePasswordResetToken(user.UserId);
 
         userService.ChangePassword(user.UserName, "Changed-In-Panel-2026!");
@@ -129,7 +131,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
     }
 
     [Fact]
@@ -139,6 +141,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var user = await AddUserAsync(dbContext, scope.ServiceProvider.GetRequiredService<UserPasswordHasher>());
+        var originalSecurityStamp = user.SecurityStamp;
         var token = userService.CreatePasswordResetToken(user.UserId);
 
         userService.EditUserForAdmin(new EditAdminViewModel
@@ -156,7 +159,7 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
     }
 
     [Fact]

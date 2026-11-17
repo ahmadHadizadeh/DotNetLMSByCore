@@ -117,40 +117,61 @@ namespace Core.Services
 
         public bool ActiveCodeAccount(string activeCode)
         {
-            var user = _context.Users.SingleOrDefault(u => u.ActiveCode == activeCode);
+            var user = _context.Users.AsNoTracking()
+                .SingleOrDefault(existingUser => existingUser.ActiveCode == activeCode);
+
             if (user == null || user.IsActive)
+            {
                 return false;
-            user.IsActive = true;
-            user.SessionVersion = checked(user.SessionVersion + 1);
-            user.ActiveCode = CreateUniqCode.buildUniqCod();
-            _context.SaveChanges();
-            return true;
+            }
+
+            var replacementActiveCode = CreateUniqCode.buildUniqCod();
+            var securityStamp = Guid.NewGuid();
+
+            var updatedRows = _context.Users
+                .Where(existingUser => existingUser.UserId == user.UserId
+                    && !existingUser.IsActive
+                    && existingUser.ActiveCode == activeCode)
+                .ExecuteUpdate(setters => setters
+                    .SetProperty(existingUser => existingUser.IsActive, true)
+                    .SetProperty(existingUser => existingUser.ActiveCode, replacementActiveCode)
+                    .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
+
+            return updatedRows == 1;
         }
 
         public bool SetUserActiveStatus(int userId, bool isActive)
         {
-            var user = _context.Users.SingleOrDefault(existingUser => existingUser.UserId == userId);
-            if (user == null)
+            var securityStamp = Guid.NewGuid();
+            int updatedRows;
+
+            if (isActive)
             {
-                return false;
+                updatedRows = _context.Users
+                    .Where(existingUser => existingUser.UserId == userId && !existingUser.IsActive)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(existingUser => existingUser.IsActive, true)
+                        .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
+            }
+            else
+            {
+                updatedRows = _context.Users
+                    .Where(existingUser => existingUser.UserId == userId && existingUser.IsActive)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(existingUser => existingUser.IsActive, false)
+                        .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
+                        .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null)
+                        .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
             }
 
-            if (user.IsActive == isActive)
+            if (updatedRows == 1)
             {
                 return true;
             }
 
-            user.IsActive = isActive;
-            user.SessionVersion = checked(user.SessionVersion + 1);
-
-            if (!isActive)
-            {
-                user.PasswordResetTokenHash = null;
-                user.PasswordResetTokenExpiresAt = null;
-            }
-
-            _context.SaveChanges();
-            return true;
+            // Preserve idempotent behavior without rotating the stamp for a no-op.
+            return _context.Users.Any(existingUser =>
+                existingUser.UserId == userId && existingUser.IsActive == isActive);
         }
 
         private const int PasswordResetTokenLifetimeHours = 6;
@@ -214,6 +235,7 @@ namespace Core.Services
             }
 
             var newPasswordHash = _passwordHasher.HashPassword(user, newPassword);
+            var securityStamp = Guid.NewGuid();
             var updatedRows = _context.Users
                 .Where(existingUser => existingUser.UserId == user.UserId
                     && existingUser.IsActive
@@ -223,7 +245,7 @@ namespace Core.Services
                     .SetProperty(existingUser => existingUser.Password, newPasswordHash)
                     .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
                     .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null)
-                    .SetProperty(existingUser => existingUser.SessionVersion, existingUser => existingUser.SessionVersion + 1));
+                    .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
 
             // The conditional UPDATE is the single-use boundary under concurrent requests.
             return updatedRows == 1;
@@ -357,17 +379,33 @@ namespace Core.Services
 
         public void ChangePassword(string userName, string newPassword)
         {
-            var user = GetUserByUserName(userName);
+            var user = _context.Users.AsNoTracking()
+                .SingleOrDefault(existingUser => existingUser.UserName == userName);
             if (user == null)
             {
                 throw new InvalidOperationException("Cannot change a password for a user that does not exist.");
             }
 
-            user.Password = _passwordHasher.HashPassword(user, newPassword);
-            user.PasswordResetTokenHash = null;
-            user.PasswordResetTokenExpiresAt = null;
-            user.SessionVersion = checked(user.SessionVersion + 1);
-            UpdateUser(user);
+            var originalPasswordHash = user.Password;
+            var replacementPasswordHash = _passwordHasher.HashPassword(user, newPassword);
+            var securityStamp = Guid.NewGuid();
+
+            // The original hash is part of the UPDATE predicate so a concurrent password
+            // change cannot overwrite a newer credential using a stale user snapshot.
+            var updatedRows = _context.Users
+                .Where(existingUser => existingUser.UserId == user.UserId
+                    && existingUser.Password == originalPasswordHash)
+                .ExecuteUpdate(setters => setters
+                    .SetProperty(existingUser => existingUser.Password, replacementPasswordHash)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null)
+                    .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
+
+            if (updatedRows != 1)
+            {
+                throw new InvalidOperationException(
+                    "The password could not be changed because the account was updated by another request.");
+            }
         }
 
         public int BallenceWallet(string userName)
@@ -538,16 +576,25 @@ namespace Core.Services
         public void EditUserForAdmin(EditAdminViewModel editAdmin)
         {
             Users user = GetUserByUserId(editAdmin.UserId);
-            //email
+            if (user == null)
+            {
+                throw new InvalidOperationException("Cannot edit a user that does not exist.");
+            }
+
+            var emailChanged = !string.Equals(user.Email, editAdmin.Email, StringComparison.Ordinal);
             user.Email = editAdmin.Email;
 
-            //password
+            // Password or sign-in identifier changes invalidate every existing session.
             if (!string.IsNullOrEmpty(editAdmin.Password))
             {
                 user.Password = _passwordHasher.HashPassword(user, editAdmin.Password);
                 user.PasswordResetTokenHash = null;
                 user.PasswordResetTokenExpiresAt = null;
-                user.SessionVersion = checked(user.SessionVersion + 1);
+                user.SecurityStamp = Guid.NewGuid();
+            }
+            else if (emailChanged)
+            {
+                user.SecurityStamp = Guid.NewGuid();
             }
 
             #region Edit ImageUser
@@ -579,24 +626,26 @@ namespace Core.Services
 
             #endregion Edit ImageUser
 
-            //ImageUser
-            _context.Users.Update(user);
+            // The user is tracked; SaveChanges updates only changed columns.
+            // Marking the whole entity modified could overwrite concurrent security updates.
             _context.SaveChanges();
         }
 
         public void DeleteUser(int userId)
         {
-            var user = GetUserByUserId(userId);
-            if (user == null)
+            var securityStamp = Guid.NewGuid();
+            var updatedRows = _context.Users
+                .Where(existingUser => existingUser.UserId == userId)
+                .ExecuteUpdate(setters => setters
+                    .SetProperty(existingUser => existingUser.IsDelete, true)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenHash, (string?)null)
+                    .SetProperty(existingUser => existingUser.PasswordResetTokenExpiresAt, (DateTime?)null)
+                    .SetProperty(existingUser => existingUser.SecurityStamp, securityStamp));
+
+            if (updatedRows != 1)
             {
                 throw new InvalidOperationException("Cannot delete a user that does not exist.");
             }
-
-            user.IsDelete = true;
-            user.PasswordResetTokenHash = null;
-            user.PasswordResetTokenExpiresAt = null;
-            user.SessionVersion = checked(user.SessionVersion + 1);
-            UpdateUser(user);
         }
 
         public void AddContactUs(ContactUs contact)

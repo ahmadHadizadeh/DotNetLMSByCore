@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Asancode.Tests.Infrastructure;
 using Core.DTO;
@@ -373,6 +374,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         await SignInAsync(firstClient, user);
         await SignInAsync(secondClient, user);
 
+        var originalSecurityStamp = user.SecurityStamp;
         await using (var scope = fixture.Factory.Services.CreateAsyncScope())
         {
             var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -386,13 +388,14 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var persisted = await db.Users.AsNoTracking()
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
     }
 
     [Fact]
     public async Task Password_reset_http_flow_revokes_the_cookie_that_was_used_to_submit_it()
     {
         var user = await SeedUserAsync();
+        var originalSecurityStamp = user.SecurityStamp;
         using var client = CreateClient();
         await SignInAsync(client, user);
 
@@ -424,7 +427,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var persisted = await db.Users.AsNoTracking()
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
         Assert.Null(persisted.PasswordResetTokenHash);
     }
 
@@ -432,6 +435,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
     public async Task Admin_password_change_revokes_existing_user_sessions()
     {
         var user = await SeedUserAsync();
+        var originalSecurityStamp = user.SecurityStamp;
         using var client = CreateClient();
         await SignInAsync(client, user);
 
@@ -455,13 +459,14 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var persisted = await db.Users.AsNoTracking()
             .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
-        Assert.Equal(1, persisted.SessionVersion);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
     }
 
     [Fact]
     public async Task Deactivation_and_reactivation_cannot_restore_a_previously_issued_cookie()
     {
         var user = await SeedUserAsync();
+        var originalSecurityStamp = user.SecurityStamp;
         using var client = CreateClient();
         await SignInAsync(client, user);
 
@@ -471,7 +476,17 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
             Assert.True(userService.SetUserActiveStatus(user.UserId, false));
         }
 
-        await AssertSessionRevokedAsync(client);
+        Guid deactivatedSecurityStamp;
+        await using (var verifyScope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            deactivatedSecurityStamp = await db.Users.AsNoTracking()
+                .Where(item => item.UserId == user.UserId)
+                .Select(item => item.SecurityStamp)
+                .SingleAsync(TestContext.Current.CancellationToken);
+        }
+
+        Assert.NotEqual(originalSecurityStamp, deactivatedSecurityStamp);
 
         await using (var scope = fixture.Factory.Services.CreateAsyncScope())
         {
@@ -479,17 +494,77 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
             Assert.True(userService.SetUserActiveStatus(user.UserId, true));
         }
 
-        using var afterReactivation = await client.GetAsync(
-            "/Login",
-            TestContext.Current.CancellationToken);
-        var html = await afterReactivation.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        Assert.DoesNotContain("شما با موفقیت وارد سایت شدید", html);
+        await using (var verifyScope = fixture.Factory.Services.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+            var reactivatedSecurityStamp = await db.Users.AsNoTracking()
+                .Where(item => item.UserId == user.UserId)
+                .Select(item => item.SecurityStamp)
+                .SingleAsync(TestContext.Current.CancellationToken);
+            Assert.NotEqual(deactivatedSecurityStamp, reactivatedSecurityStamp);
+        }
+
+        // Keep the original cookie until after reactivation: it must not become valid again.
+        await AssertSessionRevokedAsync(client);
+    }
+
+    [Fact]
+    public async Task Concurrent_password_change_and_deactivation_preserve_both_updates_and_revoke_all_sessions()
+    {
+        var user = await SeedUserAsync();
+        var originalSecurityStamp = user.SecurityStamp;
+        using var firstClient = CreateClient();
+        using var secondClient = CreateClient();
+        await SignInAsync(firstClient, user);
+        await SignInAsync(secondClient, user);
+
+        await using var passwordScope = fixture.Factory.Services.CreateAsyncScope();
+        await using var statusScope = fixture.Factory.Services.CreateAsyncScope();
+        var passwordService = passwordScope.ServiceProvider.GetRequiredService<IUserService>();
+        var statusService = statusScope.ServiceProvider.GetRequiredService<IUserService>();
+
+        using var startGate = new ManualResetEventSlim(false);
+        var passwordTask = Task.Run(() =>
+        {
+            startGate.Wait(TestContext.Current.CancellationToken);
+            passwordService.ChangePassword(user.UserName, "Concurrent-Changed-Password-2026!");
+        }, TestContext.Current.CancellationToken);
+
+        var statusTask = Task.Run(() =>
+        {
+            startGate.Wait(TestContext.Current.CancellationToken);
+            return statusService.SetUserActiveStatus(user.UserId, false);
+        }, TestContext.Current.CancellationToken);
+
+        startGate.Set();
+        await Task.WhenAll(passwordTask, statusTask);
+        Assert.True(statusTask.Result);
+
+        await AssertSessionRevokedAsync(firstClient);
+        await AssertSessionRevokedAsync(secondClient);
+
+        await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var hasher = verifyScope.ServiceProvider.GetRequiredService<UserPasswordHasher>();
+        var persisted = await db.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+
+        Assert.False(persisted.IsActive);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
+        Assert.Null(persisted.PasswordResetTokenHash);
+        Assert.NotEqual(
+            Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed,
+            hasher.VerifyPassword(
+                persisted,
+                persisted.Password,
+                "Concurrent-Changed-Password-2026!"));
     }
 
     [Fact]
     public async Task Soft_deleting_an_account_revokes_its_existing_cookie()
     {
         var user = await SeedUserAsync();
+        var originalSecurityStamp = user.SecurityStamp;
         using var client = CreateClient();
         await SignInAsync(client, user);
 
@@ -500,6 +575,13 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         }
 
         await AssertSessionRevokedAsync(client);
+
+        await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var persisted = await db.Users.IgnoreQueryFilters().AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.True(persisted.IsDelete);
+        Assert.NotEqual(originalSecurityStamp, persisted.SecurityStamp);
     }
 
     [Fact]

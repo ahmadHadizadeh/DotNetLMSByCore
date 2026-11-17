@@ -47,8 +47,8 @@ namespace DataLayer.Entities.User
 
         public DateTime? PasswordResetTokenExpiresAt { get; set; }
 
-        /// <summary>Incremented whenever all previously issued authentication sessions must be revoked.</summary>
-        public int SessionVersion { get; set; }
+        /// <summary>Rotated whenever all previously issued authentication sessions must be revoked.</summary>
+        public Guid SecurityStamp { get; set; } = Guid.NewGuid();
 
         [Display(Name = "تاریخ")]
         public DateTime RegisterDate { get; set; }

@@ -813,9 +813,9 @@ namespace DataLayer.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
-                    b.Property<int>("SessionVersion")
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                    b.Property<Guid>("SecurityStamp")
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
 
                     b.Property<DateTime>("RegisterDate")
                         .HasColumnType("datetime2");
