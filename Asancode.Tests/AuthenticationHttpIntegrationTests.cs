@@ -189,6 +189,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
     {
         var activeUser = await SeedUserAsync();
         var inactiveUser = await SeedUserAsync(isActive: false);
+        var deletedUser = await SeedUserAsync(isDeleted: true);
         using var client = CreateClient();
         var token = await GetAntiforgeryTokenAsync(client, "/Login");
 
@@ -202,6 +203,9 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
 
         Assert.Equal(HttpStatusCode.OK, wrongPasswordResponse.StatusCode);
         Assert.False(HasApplicationCookie(wrongPasswordResponse));
+        var wrongPasswordHtml = await wrongPasswordResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", wrongPasswordHtml);
 
         using var inactiveResponse = await client.PostAsync(
             "/login",
@@ -213,6 +217,23 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
 
         Assert.Equal(HttpStatusCode.OK, inactiveResponse.StatusCode);
         Assert.False(HasApplicationCookie(inactiveResponse));
+        var inactiveHtml = await inactiveResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", inactiveHtml);
+
+        using var deletedResponse = await client.PostAsync(
+            "/login",
+            CreateForm(
+                ("Email", deletedUser.Email),
+                ("Password", "Initial-Password-2026!"),
+                ("__RequestVerificationToken", token)),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, deletedResponse.StatusCode);
+        Assert.False(HasApplicationCookie(deletedResponse));
+        var deletedHtml = await deletedResponse.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", deletedHtml);
     }
 
     [Fact]
@@ -385,7 +406,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
             cookie.Contains("expires=", StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task<Users> SeedUserAsync(bool isActive = true)
+    private async Task<Users> SeedUserAsync(bool isActive = true, bool isDeleted = false)
     {
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
@@ -400,7 +421,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
             ActiveCode = Guid.NewGuid().ToString("N"),
             RegisterDate = DateTime.UtcNow,
             IsActive = isActive,
-            IsDelete = false
+            IsDelete = isDeleted
         };
 
         user.Password = hasher.HashPassword(user, "Initial-Password-2026!");
