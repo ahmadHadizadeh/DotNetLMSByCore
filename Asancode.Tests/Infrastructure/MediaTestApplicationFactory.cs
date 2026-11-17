@@ -54,9 +54,19 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 .AddPolicyScheme(testOrCookieScheme, "Media test header or application cookie", options =>
                 {
                     options.ForwardDefaultSelector = context =>
-                        context.Request.Headers.ContainsKey(MediaTestAuthenticationHandler.UserHeaderName)
-                            ? MediaTestAuthenticationHandler.SchemeName
-                            : CookieAuthenticationDefaults.AuthenticationScheme;
+                    {
+                        if (context.Request.Headers.ContainsKey(MediaTestAuthenticationHandler.UserHeaderName))
+                        {
+                            return MediaTestAuthenticationHandler.SchemeName;
+                        }
+
+                        return string.Equals(
+                            context.Request.Headers[MediaTestAuthenticationHandler.UseRealCookieHeaderName],
+                            "true",
+                            StringComparison.OrdinalIgnoreCase)
+                                ? CookieAuthenticationDefaults.AuthenticationScheme
+                                : MediaTestAuthenticationHandler.SchemeName;
+                    };
                 });
         });
     }

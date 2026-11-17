@@ -172,12 +172,13 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.Equal("/", externalResponse.Headers.Location?.OriginalString);
         Assert.DoesNotContain("evil.example", externalResponse.Headers.Location?.OriginalString ?? string.Empty);
 
+        var authenticatedToken = await GetAntiforgeryTokenAsync(client, "/Login");
         using var protocolRelativeResponse = await client.PostAsync(
             "/login?ReturnUrl=%2F%2Fevil.example%2Fphish",
             CreateForm(
                 ("Email", user.Email),
                 ("Password", "Initial-Password-2026!"),
-                ("__RequestVerificationToken", token)),
+                ("__RequestVerificationToken", authenticatedToken)),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Redirect, protocolRelativeResponse.StatusCode);
@@ -205,7 +206,8 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.False(HasApplicationCookie(wrongPasswordResponse));
         var wrongPasswordHtml = await wrongPasswordResponse.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken);
-        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", wrongPasswordHtml);
+        var wrongPasswordError = ExtractEmailValidationMessage(wrongPasswordHtml);
+        Assert.False(HasApplicationCookie(wrongPasswordResponse));
 
         using var inactiveResponse = await client.PostAsync(
             "/login",
@@ -219,7 +221,8 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.False(HasApplicationCookie(inactiveResponse));
         var inactiveHtml = await inactiveResponse.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken);
-        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", inactiveHtml);
+        var inactiveError = ExtractEmailValidationMessage(inactiveHtml);
+        Assert.Equal(wrongPasswordError, inactiveError);
 
         using var deletedResponse = await client.PostAsync(
             "/login",
@@ -233,7 +236,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.False(HasApplicationCookie(deletedResponse));
         var deletedHtml = await deletedResponse.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken);
-        Assert.Contains("اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست", deletedHtml);
+        Assert.Equal(wrongPasswordError, ExtractEmailValidationMessage(deletedHtml));
     }
 
     [Fact]
@@ -383,6 +386,9 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         });
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.Add(
+            MediaTestAuthenticationHandler.UseRealCookieHeaderName,
+            "true");
         return client;
     }
 
@@ -395,6 +401,17 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         return ExtractAntiforgeryToken(html);
+    }
+
+    private static string ExtractEmailValidationMessage(string html)
+    {
+        var match = Regex.Match(
+            html,
+            "<span[^>]*data-valmsg-for=\\\"Email\\\"[^>]*>(?<message>.*?)</span>",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        Assert.True(match.Success, "The login form must render its email validation message.");
+        return WebUtility.HtmlDecode(match.Groups["message"].Value).Trim();
     }
 
     private static string ExtractAntiforgeryToken(string html)

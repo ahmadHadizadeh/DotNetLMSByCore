@@ -14,6 +14,7 @@ public sealed class MediaTestAuthenticationHandler(
 {
     public const string SchemeName = "MediaTest";
     public const string UserHeaderName = "X-Test-User";
+    public const string UseRealCookieHeaderName = "X-Test-Real-Cookie";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
