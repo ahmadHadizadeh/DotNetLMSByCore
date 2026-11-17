@@ -130,7 +130,7 @@ namespace Asancode.Web.Controllers
             {
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString(CultureInfo.InvariantCulture)),
                 new(ClaimTypes.Name, user.UserName),
-                new(UserSessionClaims.SessionVersion, user.SessionVersion.ToString(CultureInfo.InvariantCulture))
+                new(UserSessionClaims.SecurityStamp, user.SecurityStamp.ToString("N"))
             };
 
             var identity = new ClaimsIdentity(

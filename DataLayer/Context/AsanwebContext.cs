@@ -81,8 +81,8 @@ public class AsanwebContext : DbContext
             .HasFilter("[PasswordResetTokenHash] IS NOT NULL");
 
         modelBuilder.Entity<Users>()
-            .Property(user => user.SessionVersion)
-            .HasDefaultValue(0);
+            .Property(user => user.SecurityStamp)
+            .HasDefaultValueSql("NEWID()");
 
         #region code for Delete problem FK_Table
 
