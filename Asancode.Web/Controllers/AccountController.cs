@@ -31,13 +31,20 @@ namespace Asancode.Web.Controllers
         private AsanwebContext _context;
         private IViewRenderService _renderService;
         private SignInManager<ApplicationUser> _signInManager;
+        private readonly IEmailSender _emailSender;
 
-        public AccountController(IUserService userService, AsanwebContext context, IViewRenderService renderService, SignInManager<ApplicationUser> signInManager)
+        public AccountController(
+            IUserService userService,
+            AsanwebContext context,
+            IViewRenderService renderService,
+            SignInManager<ApplicationUser> signInManager,
+            IEmailSender emailSender)
         {
             _userService = userService;
             _context = context;
             _renderService = renderService;
             _signInManager = signInManager;
+            _emailSender = emailSender;
         }
 
         #endregion InterFace
@@ -82,7 +89,7 @@ namespace Asancode.Web.Controllers
             user.Password = _userService.HashPassword(user, register.Password);
             _userService.AddUser(user);
             string body = _renderService.RenderToStringAsync("_ActiveEmail", user);
-            SendEmail.Send(user.Email, "ایمیل فعال سازی", body);
+            _emailSender.Send(user.Email, "ایمیل فعال سازی", body);
             return View("SeuccessRegister", user);
         }
 
@@ -217,6 +224,7 @@ namespace Asancode.Web.Controllers
 
         [Route("ForgotPassword")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult ForgotPassword(ForgotPasswordViewModel forgot)
         {
             if (!ModelState.IsValid)
@@ -235,7 +243,7 @@ namespace Asancode.Web.Controllers
                 };
 
                 String bodyEmail = _renderService.RenderToStringAsync("_ForgotPassword", emailModel);
-                SendEmail.Send(user.Email, "بازیابی کلمه عبور", bodyEmail);
+                _emailSender.Send(user.Email, "بازیابی کلمه عبور", bodyEmail);
             }
 
             // Keep the response identical for known and unknown addresses.
@@ -258,6 +266,7 @@ namespace Asancode.Web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult ResetPassword(ResetPasswordViewModel reset)
         {
             if (!ModelState.IsValid)
