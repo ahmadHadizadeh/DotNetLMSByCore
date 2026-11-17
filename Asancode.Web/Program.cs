@@ -73,9 +73,11 @@ builder.Services
         && options.IpWindowMinutes is > 0 and <= 1440
         && options.IpCooldownMinutes is > 0 and <= 1440
         && options.RetentionHours is >= 1 and <= 720
+        && options.MaxAccountBuckets is > 0 and <= 1_000_000
+        && options.AccountBucketCapacityRetryMinutes is > 0 and <= 60
         && options.CleanupBatchSize is > 0 and <= 5000
         && options.CleanupMaxBatchesPerRun is > 0 and <= 100,
-        "Authentication rate-limit thresholds and durations must be positive and internally consistent.")
+        "Authentication rate-limit thresholds, storage limits, and durations must be positive and internally consistent.")
     .ValidateOnStart();
 
 var trustedProxyAddresses = new List<IPAddress>();
