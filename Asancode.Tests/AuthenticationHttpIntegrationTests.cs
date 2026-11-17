@@ -95,7 +95,7 @@ public sealed class AuthenticationHttpIntegrationTests(MediaSqlServerFixture fix
         await using var scope = fixture.Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
         var user = await db.Users.SingleAsync(
-            item => item.Email == email.To,
+            item => item.Email == activationEmail.To,
             TestContext.Current.CancellationToken);
         Assert.False(user.IsActive);
         Assert.False(user.IsDelete);
