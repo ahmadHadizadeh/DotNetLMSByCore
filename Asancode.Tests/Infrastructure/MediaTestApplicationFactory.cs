@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Core.Security.Sender;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Asancode.Tests.Infrastructure;
 
@@ -29,6 +31,11 @@ public sealed class MediaTestApplicationFactory(string connectionString)
 
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<RecordingEmailSender>();
+            services.AddSingleton<IEmailSender>(provider =>
+                provider.GetRequiredService<RecordingEmailSender>());
+
             services
                 .AddAuthentication(options =>
                 {
