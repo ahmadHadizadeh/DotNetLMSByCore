@@ -75,7 +75,7 @@
                     {
                         <li class="list-inline-item mb-0">
                             <a href="/UserPanel/" style="color: #9CE75B"> @User.Identity.Name ، خوش آمدی </a>
-                            <form action="/Logout" method="post" class="d-inline"><button type="submit" class="btn btn-link p-0"> خروج </button></form>
+                            <form action="/Logout" method="post" asp-antiforgery="true" class="d-inline"><button type="submit" class="btn btn-link p-0"> خروج </button></form>
                         </li>
                     }
                     else
