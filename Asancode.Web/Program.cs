@@ -53,14 +53,15 @@ builder.Services
         }
     }, "AuthenticationRateLimit:KeyPepper must be a Base64-encoded secret of at least 32 bytes.")
     .Validate(options =>
-        options.AccountFailureThreshold > 0
-        && options.AccountWindowMinutes > 0
-        && options.AccountBaseCooldownMinutes > 0
+        options.AccountFailureThreshold is > 0 and <= 100
+        && options.AccountWindowMinutes is > 0 and <= 1440
+        && options.AccountBaseCooldownMinutes is > 0 and <= 15
         && options.AccountMaxCooldownMinutes >= options.AccountBaseCooldownMinutes
-        && options.IpFailureThreshold > 0
-        && options.IpWindowMinutes > 0
-        && options.IpCooldownMinutes > 0
-        && options.RetentionHours >= 1,
+        && options.AccountMaxCooldownMinutes <= 1440
+        && options.IpFailureThreshold is > 0 and <= 100000
+        && options.IpWindowMinutes is > 0 and <= 1440
+        && options.IpCooldownMinutes is > 0 and <= 1440
+        && options.RetentionHours is >= 1 and <= 720,
         "Authentication rate-limit thresholds and durations must be positive and internally consistent.")
     .ValidateOnStart();
 

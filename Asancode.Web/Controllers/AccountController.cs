@@ -164,12 +164,12 @@ namespace Asancode.Web.Controllers
                 IsPersistent = login.RememberMe
             };
 
+            _authenticationRateLimiter.ClearAfterSuccessfulLogin(login.Email, clientIpAddress);
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
                 properties);
-
-            _authenticationRateLimiter.ClearAfterSuccessfulLogin(login.Email, clientIpAddress);
 
             var destination = Url.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
             return LocalRedirect(destination);

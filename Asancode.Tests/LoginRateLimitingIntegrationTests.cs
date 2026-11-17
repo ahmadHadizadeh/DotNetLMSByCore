@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Asancode.Tests.Infrastructure;
 using Core.Security;
@@ -81,15 +83,14 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
         Assert.True(firstLock.IsLimited);
         Assert.InRange(firstLock.RetryAfterSeconds, 1, 60);
 
-        string keyHash;
+        var keyHash = GetAccountKeyHash("rate-limit-case@example.test");
         await using (var verifyScope = fixture.Factory.Services.CreateAsyncScope())
         {
             var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
             var entry = await db.AuthenticationRateLimitEntries
                 .SingleAsync(
-                    item => item.Scope == 1,
+                    item => item.Scope == 1 && item.KeyHash == keyHash,
                     TestContext.Current.CancellationToken);
-            keyHash = entry.KeyHash;
             Assert.DoesNotContain("rate-limit-case@example.test", keyHash, StringComparison.OrdinalIgnoreCase);
             Assert.Equal(1, entry.ConsecutiveLockouts);
         }
@@ -143,11 +144,11 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
 
         await using var verifyScope = fixture.Factory.Services.CreateAsyncScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AsanwebContext>();
-        var entries = await db.AuthenticationRateLimitEntries
-            .Where(entry => entry.Scope == 1)
-            .ToListAsync(TestContext.Current.CancellationToken);
-
-        var matchingEntry = Assert.Single(entries);
+        var keyHash = GetAccountKeyHash(email);
+        var matchingEntry = await db.AuthenticationRateLimitEntries
+            .SingleAsync(
+                entry => entry.Scope == 1 && entry.KeyHash == keyHash,
+                TestContext.Current.CancellationToken);
         Assert.Equal(0, matchingEntry.FailedAttempts);
         Assert.Equal(1, matchingEntry.ConsecutiveLockouts);
         using var statusScope = fixture.Factory.Services.CreateScope();
@@ -243,6 +244,15 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
 
     private static FormUrlEncodedContent CreateForm(params (string Key, string Value)[] values) =>
         new(values.ToDictionary(item => item.Key, item => item.Value));
+
+    private static string GetAccountKeyHash(string email)
+    {
+        const string testPepper = "dGVzdGluZy1vbmx5LXBlcHBlci1mb3Itc3FsLXNlcnZlci10ZXN0cy0yMDI2";
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var input = Encoding.UTF8.GetBytes("account\n" + normalizedEmail);
+        return Convert.ToHexString(
+            HMACSHA256.HashData(Convert.FromBase64String(testPepper), input));
+    }
 
     private async Task<Users> SeedUserAsync()
     {
