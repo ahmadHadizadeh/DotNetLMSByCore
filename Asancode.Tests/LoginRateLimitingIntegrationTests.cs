@@ -249,7 +249,7 @@ public sealed class LoginRateLimitingIntegrationTests(MediaSqlServerFixture fixt
 
     private static string GetAccountKeyHash(string email)
     {
-        const string testPepper = "dGVzdGluZy1vbmx5LXBlcHBlci1mb3Itc3FsLXNlcnZlci10ZXN0cy0yMDI2";
+        const string testPepper = "dGVzdC1rZXktcGVwcGVyLWZvci1pbnRlZ3JhdGlvbi10ZXN0cy0yMDI2LTMyLWJ5dGVz";
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var input = Encoding.UTF8.GetBytes("account\n" + normalizedEmail);
         return Convert.ToHexString(

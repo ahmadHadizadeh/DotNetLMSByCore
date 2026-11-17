@@ -24,6 +24,17 @@ public sealed class AuthenticationRateLimitCleanupService(
         {
             try
             {
+                // Delay the first cleanup until after startup. This avoids a database
+                // connection during startup in endpoints that intentionally run DB-free.
+                await Task.Delay(_interval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            try
+            {
                 await using var scope = scopeFactory.CreateAsyncScope();
                 var context = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
                 var now = DateTime.UtcNow;
@@ -58,14 +69,6 @@ public sealed class AuthenticationRateLimitCleanupService(
                     "Authentication rate-limit cleanup failed; expired entries will be retried later.");
             }
 
-            try
-            {
-                await Task.Delay(_interval, stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                return;
-            }
         }
     }
 }

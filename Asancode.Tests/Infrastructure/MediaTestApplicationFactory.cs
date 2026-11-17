@@ -27,7 +27,7 @@ public sealed class MediaTestApplicationFactory(string connectionString)
                 ["Authentication:Facebook:AppId"] = "integration-test-app",
                 ["Authentication:Facebook:AppSecret"] = "integration-test-secret",
                 ["MediaUpload:MaxArchiveBytes"] = "2048",
-                ["AuthenticationRateLimit:KeyPepper"] = "dGVzdGluZy1vbmx5LXBlcHBlci1mb3Itc3FsLXNlcnZlci10ZXN0cy0yMDI2",
+                ["AuthenticationRateLimit:KeyPepper"] = "dGVzdC1rZXktcGVwcGVyLWZvci1pbnRlZ3JhdGlvbi10ZXN0cy0yMDI2LTMyLWJ5dGVz",
                 ["AuthenticationRateLimit:AccountFailureThreshold"] = "8",
                 ["AuthenticationRateLimit:AccountWindowMinutes"] = "15",
                 ["AuthenticationRateLimit:AccountBaseCooldownMinutes"] = "1",
