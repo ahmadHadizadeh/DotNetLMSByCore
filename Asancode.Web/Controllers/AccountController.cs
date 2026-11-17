@@ -29,15 +29,18 @@ namespace Asancode.Web.Controllers
         private IUserService _userService;
         private IViewRenderService _renderService;
         private readonly IEmailSender _emailSender;
+        private readonly IAuthenticationRateLimiter _authenticationRateLimiter;
 
         public AccountController(
             IUserService userService,
             IViewRenderService renderService,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IAuthenticationRateLimiter authenticationRateLimiter)
         {
             _userService = userService;
             _renderService = renderService;
             _emailSender = emailSender;
+            _authenticationRateLimiter = authenticationRateLimiter;
         }
 
         #endregion InterFace
@@ -112,18 +115,36 @@ namespace Asancode.Web.Controllers
                 return View(login);
             }
 
+            var clientIpAddress = HttpContext.Connection.RemoteIpAddress;
+            var currentLimit = _authenticationRateLimiter.GetStatus(login.Email, clientIpAddress);
+            if (currentLimit.IsLimited)
+            {
+                return ReturnRateLimitedLogin(login, ReturnUrl, currentLimit);
+            }
+
             var user = _userService.LoginUser(login);
 
-            if (user == null)
+            if (user == null || !user.IsActive)
             {
+                var failedAttempt = _authenticationRateLimiter.RecordFailedAttempt(
+                    login.Email,
+                    clientIpAddress);
+
+                if (failedAttempt.IsLimited)
+                {
+                    return ReturnRateLimitedLogin(login, ReturnUrl, failedAttempt);
+                }
+
                 ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
                 return View(login);
             }
 
-            if (!user.IsActive)
+            // Re-check after password verification so concurrent failed attempts cannot
+            // establish a lock while this request proceeds to issue a cookie.
+            var finalLimit = _authenticationRateLimiter.GetStatus(login.Email, clientIpAddress);
+            if (finalLimit.IsLimited)
             {
-                ModelState.AddModelError("Email", "اطلاعات ورود نامعتبر است یا حساب کاربری فعال نیست");
-                return View(login);
+                return ReturnRateLimitedLogin(login, ReturnUrl, finalLimit);
             }
 
             var claims = new List<Claim>
@@ -143,6 +164,8 @@ namespace Asancode.Web.Controllers
                 IsPersistent = login.RememberMe
             };
 
+            _authenticationRateLimiter.ClearAccountAfterSuccessfulLogin(login.Email);
+
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
@@ -150,6 +173,19 @@ namespace Asancode.Web.Controllers
 
             var destination = Url.IsLocalUrl(ReturnUrl) ? ReturnUrl! : "/";
             return LocalRedirect(destination);
+        }
+
+        private ActionResult ReturnRateLimitedLogin(
+            LoginViewModel login,
+            string? returnUrl,
+            LoginRateLimitStatus status)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.LoginRateLimitSeconds = status.RetryAfterSeconds;
+            Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            Response.Headers["Retry-After"] = status.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
+
+            return View("Login", login);
         }
 
         #endregion Login

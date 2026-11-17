@@ -8,7 +8,7 @@ namespace Core.Convertors
     {
         public static string FixedEmail(string email)
         {
-            return email.Trim().ToLower();
+            return email.Trim().ToLowerInvariant();
         }
     }
 }

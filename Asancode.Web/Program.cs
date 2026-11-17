@@ -13,10 +13,23 @@ using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Development-only fallback: never commit a reusable HMAC pepper to source control.
+// Production and other persistent environments must supply a stable secret via configuration.
+var rateLimitPepperConfigurationKey = $"{LoginRateLimitOptions.SectionName}:KeyPepper";
+if (builder.Environment.IsDevelopment()
+    && string.IsNullOrWhiteSpace(builder.Configuration[rateLimitPepperConfigurationKey]))
+{
+    builder.Configuration[rateLimitPepperConfigurationKey] =
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+}
 
 #region Services
 
@@ -30,6 +43,78 @@ builder.Services.AddRazorPages();
 // IOC
 builder.Services.AddTransient<UserPasswordHasher>();
 builder.Services.AddTransient<IUserService, Userservice>();
+
+// Login rate limiting uses a stable application secret to create non-reversible account/IP keys.
+var loginRateLimitOptions = builder.Configuration
+    .GetSection(LoginRateLimitOptions.SectionName)
+    .Get<LoginRateLimitOptions>() ?? new LoginRateLimitOptions();
+
+builder.Services
+    .AddOptions<LoginRateLimitOptions>()
+    .Bind(builder.Configuration.GetSection(LoginRateLimitOptions.SectionName))
+    .Validate(options =>
+    {
+        try
+        {
+            return Convert.FromBase64String(options.KeyPepper).Length >= 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }, "AuthenticationRateLimit:KeyPepper must be a Base64-encoded secret of at least 32 bytes.")
+    .Validate(options =>
+        options.AccountFailureThreshold is > 0 and <= 100
+        && options.AccountWindowMinutes is > 0 and <= 1440
+        && options.AccountBaseCooldownMinutes is > 0 and <= 15
+        && options.AccountMaxCooldownMinutes >= options.AccountBaseCooldownMinutes
+        && options.AccountMaxCooldownMinutes <= 1440
+        && options.IpFailureThreshold is > 0 and <= 100000
+        && options.IpWindowMinutes is > 0 and <= 1440
+        && options.IpCooldownMinutes is > 0 and <= 1440
+        && options.RetentionHours is >= 1 and <= 720
+        && options.MaxAccountBuckets is > 0 and <= 1_000_000
+        && options.AccountBucketCapacityRetryMinutes is > 0 and <= 60
+        && options.CleanupBatchSize is > 0 and <= 5000
+        && options.CleanupMaxBatchesPerRun is > 0 and <= 100,
+        "Authentication rate-limit thresholds, storage limits, and durations must be positive and internally consistent.")
+    .ValidateOnStart();
+
+var trustedProxyAddresses = new List<IPAddress>();
+foreach (var proxyValue in loginRateLimitOptions.TrustedProxies)
+{
+    if (!IPAddress.TryParse(proxyValue, out var proxyAddress))
+    {
+        throw new InvalidOperationException(
+            $"AuthenticationRateLimit:TrustedProxies contains an invalid IP address: '{proxyValue}'.");
+    }
+
+    trustedProxyAddresses.Add(proxyAddress);
+}
+
+if (loginRateLimitOptions.EnableIpRateLimit
+    && trustedProxyAddresses.Count == 0
+    && !loginRateLimitOptions.DirectClientConnections)
+{
+    throw new InvalidOperationException(
+        "EnableIpRateLimit requires trusted proxy addresses or an explicit DirectClientConnections=true setting.");
+}
+
+if (loginRateLimitOptions.EnableIpRateLimit && trustedProxyAddresses.Count > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+        foreach (var proxyAddress in trustedProxyAddresses)
+        {
+            options.KnownProxies.Add(proxyAddress);
+        }
+    });
+}
+
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddScoped<IAuthenticationRateLimiter, AuthenticationRateLimiter>();
+builder.Services.AddHostedService<AuthenticationRateLimitCleanupService>();
 builder.Services.AddTransient<IViewRenderService, RenderViewToString>();
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 builder.Services.AddTransient<IPermissionService, PermissionService>();
@@ -136,6 +221,13 @@ builder.Services.Configure<FormOptions>(options =>
 var app = builder.Build();
 
 #region Middleware
+
+// Resolve client IPs only through explicitly configured trusted proxies.
+// Without that configuration, forwarded headers are ignored.
+if (loginRateLimitOptions.EnableIpRateLimit && trustedProxyAddresses.Count > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 // Redirect browser-facing HTML 404 responses to the legacy error page.
 // Preserve the actual 404 status for JSON/XHR and other non-HTML clients.

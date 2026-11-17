@@ -17,13 +17,15 @@ public sealed class MediaSqlServerFixture : IAsyncLifetime
         .WithPassword("MediaTests!Only_2026")
         .Build();
 
+    public string ConnectionString => _container.GetConnectionString();
+
     public MediaTestApplicationFactory Factory { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
 
-        Factory = new MediaTestApplicationFactory(_container.GetConnectionString());
+        Factory = new MediaTestApplicationFactory(ConnectionString);
 
         await using var scope = Factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();

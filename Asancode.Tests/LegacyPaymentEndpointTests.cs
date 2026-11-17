@@ -22,7 +22,8 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
                 ["Authentication:Google:ClientId"] = "integration-test-client",
                 ["Authentication:Google:ClientSecret"] = "integration-test-secret",
                 ["Authentication:Facebook:AppId"] = "integration-test-app",
-                ["Authentication:Facebook:AppSecret"] = "integration-test-secret"
+                                ["Authentication:Facebook:AppSecret"] = "integration-test-secret",
+                ["AuthenticationRateLimit:KeyPepper"] = "dGVzdC1rZXktcGVwcGVyLWZvci1pbnRlZ3JhdGlvbi10ZXN0cy0yMDI2LTMyLWJ5dGVz"
             });
         });
     }

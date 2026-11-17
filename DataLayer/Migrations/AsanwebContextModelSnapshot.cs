@@ -777,6 +777,40 @@ namespace DataLayer.Migrations
                     b.ToTable("UserPlans");
                 });
 
+            modelBuilder.Entity("DataLayer.Entities.User.AuthenticationRateLimitEntry", b =>
+                {
+                    b.Property<byte>("Scope")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("KeyHash")
+                        .IsUnicode(false)
+                        .IsFixedLength()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("WindowStartedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("BlockedUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ConsecutiveLockouts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastAttemptUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Scope", "KeyHash");
+
+                    b.HasIndex("LastAttemptUtc")
+                        .HasDatabaseName("IX_AuthenticationRateLimitEntries_LastAttemptUtc");
+
+                    b.ToTable("AuthenticationRateLimitEntries");
+                });
+
             modelBuilder.Entity("DataLayer.Entities.User.Users", b =>
                 {
                     b.Property<int>("UserId")
