@@ -332,6 +332,8 @@ namespace Core.Services
             }
 
             user.Password = _passwordHasher.HashPassword(user, newPassword);
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetTokenExpiresAt = null;
             UpdateUser(user);
         }
 
@@ -510,6 +512,8 @@ namespace Core.Services
             if (!string.IsNullOrEmpty(editAdmin.Password))
             {
                 user.Password = _passwordHasher.HashPassword(user, editAdmin.Password);
+                user.PasswordResetTokenHash = null;
+                user.PasswordResetTokenExpiresAt = null;
             }
 
             #region Edit ImageUser

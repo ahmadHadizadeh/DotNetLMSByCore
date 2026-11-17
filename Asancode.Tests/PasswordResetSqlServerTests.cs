@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Asancode.Tests.Infrastructure;
+using Core.DTO;
 using Core.Security;
 using Core.Services.Interfaces;
 using DataLayer.Context;
@@ -109,6 +110,50 @@ public sealed class PasswordResetSqlServerTests(MediaSqlServerFixture fixture)
         Assert.Null(persisted.PasswordResetTokenHash);
         Assert.Null(persisted.PasswordResetTokenExpiresAt);
         Assert.Equal(user.ActiveCode, persisted.ActiveCode);
+    }
+
+    [Fact]
+    public async Task ChangePassword_invalidates_any_outstanding_reset_token()
+    {
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+        var user = await AddUserAsync(dbContext, scope.ServiceProvider.GetRequiredService<UserPasswordHasher>());
+        var token = userService.CreatePasswordResetToken(user.UserId);
+
+        userService.ChangePassword(user.UserName, "Changed-In-Panel-2026!");
+
+        Assert.False(userService.IsPasswordResetTokenValid(token));
+        var persisted = await dbContext.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.Null(persisted.PasswordResetTokenHash);
+        Assert.Null(persisted.PasswordResetTokenExpiresAt);
+    }
+
+    [Fact]
+    public async Task Admin_password_change_invalidates_any_outstanding_reset_token()
+    {
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AsanwebContext>();
+        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+        var user = await AddUserAsync(dbContext, scope.ServiceProvider.GetRequiredService<UserPasswordHasher>());
+        var token = userService.CreatePasswordResetToken(user.UserId);
+
+        userService.EditUserForAdmin(new EditAdminViewModel
+        {
+            UserId = user.UserId,
+            Email = user.Email,
+            Password = "Changed-By-Admin-2026!",
+            ImageName = user.UserImage,
+            UserImage = null!,
+            UserRole = new System.Collections.Generic.List<int>()
+        });
+
+        Assert.False(userService.IsPasswordResetTokenValid(token));
+        var persisted = await dbContext.Users.AsNoTracking()
+            .SingleAsync(item => item.UserId == user.UserId, TestContext.Current.CancellationToken);
+        Assert.Null(persisted.PasswordResetTokenHash);
+        Assert.Null(persisted.PasswordResetTokenExpiresAt);
     }
 
     [Fact]
