@@ -148,12 +148,13 @@ namespace Asancode.Web.Areas.UserPanel.Controllers
             }
 
             var file = files[0];
-            if (!MediaArchiveUploadValidator.TryValidate(
-                    file,
-                    _mediaUploadOptions.MaxArchiveBytes,
-                    out var failureStatusCode))
+            var validationFailure = await MediaArchiveUploadValidator.GetFailureStatusCodeAsync(
+                file,
+                _mediaUploadOptions.MaxArchiveBytes,
+                HttpContext.RequestAborted);
+            if (validationFailure.HasValue)
             {
-                return StatusCode(failureStatusCode);
+                return StatusCode(validationFailure.Value);
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
