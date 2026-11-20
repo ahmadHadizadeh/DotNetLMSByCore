@@ -40,7 +40,7 @@ namespace Asancode.Web.Pages.Admin.Course
             return Page();
         }
 
-        public IActionResult OnPost(int id, IFormFile? fileEpisode)
+        public async Task<IActionResult> OnPost(int id, IFormFile? fileEpisode)
         {
             var existingEpisode = _courseGroup.GetEpisodeById(id);
             if (existingEpisode is null)
@@ -62,13 +62,16 @@ namespace Asancode.Web.Pages.Admin.Course
                 return Page();
             }
 
-            if (fileEpisode is not null &&
-                !MediaArchiveUploadValidator.TryValidate(
+            if (fileEpisode is not null)
+            {
+                var validationFailure = await MediaArchiveUploadValidator.GetFailureStatusCodeAsync(
                     fileEpisode,
                     _mediaUploadOptions.MaxArchiveBytes,
-                    out var failureStatusCode))
-            {
-                return StatusCode(failureStatusCode);
+                    HttpContext.RequestAborted);
+                if (validationFailure.HasValue)
+                {
+                    return StatusCode(validationFailure.Value);
+                }
             }
 
             existingEpisode.EpisodeTitle = CourseEpisode.EpisodeTitle;
