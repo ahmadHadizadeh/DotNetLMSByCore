@@ -39,7 +39,7 @@ namespace Asancode.Web.Pages.Admin.Course
             return Page();
         }
 
-        public IActionResult OnPost(int id, IFormFile? fileEpisode)
+        public async Task<IActionResult> OnPost(int id, IFormFile? fileEpisode)
         {
             // These fields are assigned by the server, not supplied by the create form.
             ModelState.Remove("CourseEpisode.CourseId");
@@ -47,12 +47,13 @@ namespace Asancode.Web.Pages.Admin.Course
             ModelState.Remove("CourseEpisode.EpisodeFileName");
             ModelState.Remove("CourseEpisode.Courses");
 
-            if (!MediaArchiveUploadValidator.TryValidate(
-                    fileEpisode,
-                    _mediaUploadOptions.MaxArchiveBytes,
-                    out var failureStatusCode))
+            var validationFailure = await MediaArchiveUploadValidator.GetFailureStatusCodeAsync(
+                fileEpisode,
+                _mediaUploadOptions.MaxArchiveBytes,
+                HttpContext.RequestAborted);
+            if (validationFailure.HasValue)
             {
-                return StatusCode(failureStatusCode);
+                return StatusCode(validationFailure.Value);
             }
 
             if (!ModelState.IsValid)
