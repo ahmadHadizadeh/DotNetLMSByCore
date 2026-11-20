@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Asancode.Web.Media;
 using Microsoft.AspNetCore.Http;
 using Xunit;
@@ -15,11 +16,14 @@ public sealed class MediaArchiveUploadValidatorTests
     }
 
     [Fact]
-    public async Task Zip_extension_with_valid_empty_archive_signature_is_accepted()
+    public async Task Empty_zip_archive_is_accepted()
     {
-        var header = new byte[] { 0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00 };
+        using var output = new MemoryStream();
+        using (new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
+        {
+        }
 
-        Assert.Null(await ValidateAsync("lesson.zip", header));
+        Assert.Null(await ValidateAsync("lesson.zip", output.ToArray()));
     }
 
     [Fact]
