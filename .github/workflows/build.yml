@@ -50,6 +50,29 @@ jobs:
       - name: Run automated tests
         run: dotnet test Asancode.sln --configuration Release --no-build --verbosity minimal
 
+      - name: Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef --version 10.0.15
+
+      - name: Generate SQL upgrade script from the deployed baseline
+        env:
+          ConnectionStrings__AsanCodeConnection: "Server=localhost;Database=Asancode_MigrationScriptDesignTime;User Id=sa;Password=NotARealPassword!2026;TrustServerCertificate=True"
+        run: |
+          mkdir -p artifacts
+          dotnet ef migrations script 20260218105211_mig1_FirstDb 20261121130000_SeedWalletTypes \
+            --context AsanwebContext \
+            --project DataLayer/DataLayer.csproj \
+            --startup-project Asancode.Web/Asancode.Web.csproj \
+            --configuration Release \
+            --output artifacts/database-upgrade-from-mig1.sql
+
+      - name: Upload database upgrade script
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: database-upgrade-from-mig1
+          path: artifacts/database-upgrade-from-mig1.sql
+          if-no-files-found: error
+          retention-days: 14
+
   windows-image-tests:
     name: Windows native image processing tests
     runs-on: windows-latest
