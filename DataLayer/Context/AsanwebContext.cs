@@ -84,6 +84,18 @@ public class AsanwebContext : DbContext
             .Property(user => user.SecurityStamp)
             .HasDefaultValueSql("NEWID()");
 
+        modelBuilder.Entity<Wallet>()
+            .HasOne(wallet => wallet.WalletTypes)
+            .WithMany(walletType => walletType.Wallets)
+            .HasForeignKey(wallet => wallet.TypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Plan>()
+            .HasOne(plan => plan.Users)
+            .WithMany(user => user.Plans)
+            .HasForeignKey(plan => plan.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         #region code for Delete problem FK_Table
 
         var cascadeFKs = modelBuilder.Model.GetEntityTypes()

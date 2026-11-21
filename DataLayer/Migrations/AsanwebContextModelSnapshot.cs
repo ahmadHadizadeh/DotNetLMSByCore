@@ -17,7 +17,7 @@ namespace DataLayer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -682,12 +682,9 @@ namespace DataLayer.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UsersUserId")
-                        .HasColumnType("int");
-
                     b.HasKey("PlanId");
 
-                    b.HasIndex("UsersUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Plans");
                 });
@@ -893,14 +890,11 @@ namespace DataLayer.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("WalletTypesTypeId")
-                        .HasColumnType("int");
-
                     b.HasKey("WalletId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("TypeId");
 
-                    b.HasIndex("WalletTypesTypeId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Wallets");
                 });
@@ -1161,7 +1155,7 @@ namespace DataLayer.Migrations
                 {
                     b.HasOne("DataLayer.Entities.User.Users", "Users")
                         .WithMany("Plans")
-                        .HasForeignKey("UsersUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1235,7 +1229,7 @@ namespace DataLayer.Migrations
 
                     b.HasOne("DataLayer.Entities.User.WalletType", "WalletTypes")
                         .WithMany("Wallets")
-                        .HasForeignKey("WalletTypesTypeId")
+                        .HasForeignKey("TypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
