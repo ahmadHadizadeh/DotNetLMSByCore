@@ -21,9 +21,11 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
 
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", dbContext.Database.ProviderName);
         Assert.True(await dbContext.Database.CanConnectAsync(cancellationToken));
-        Assert.Contains(
-            "20260218105211_mig1_FirstDb",
-            await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken));
+        var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken);
+        Assert.Contains("20260218105211_mig1_FirstDb", appliedMigrations);
+        Assert.Contains("20261121120000_FixWalletAndPlanForeignKeys", appliedMigrations);
+        Assert.Empty(await dbContext.Database.GetPendingMigrationsAsync(cancellationToken));
+        Assert.False(dbContext.Database.HasPendingModelChanges());
 
         Assert.Equal(0, await dbContext.CourseEpisode.CountAsync(cancellationToken));
     }
