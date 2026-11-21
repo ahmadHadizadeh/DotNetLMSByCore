@@ -24,8 +24,27 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
         var appliedMigrations = await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken);
         Assert.Contains("20260218105211_mig1_FirstDb", appliedMigrations);
         Assert.Contains("20261121120000_FixWalletAndPlanForeignKeys", appliedMigrations);
+        Assert.Contains("20261121130000_SeedWalletTypes", appliedMigrations);
         Assert.Empty(await dbContext.Database.GetPendingMigrationsAsync(cancellationToken));
         Assert.False(dbContext.Database.HasPendingModelChanges());
+
+        var walletTypes = await dbContext.WalletTypes
+            .AsNoTracking()
+            .OrderBy(walletType => walletType.TypeId)
+            .Select(walletType => new { walletType.TypeId, walletType.TypeTitle })
+            .ToListAsync(cancellationToken);
+        Assert.Collection(
+            walletTypes,
+            deposit =>
+            {
+                Assert.Equal(1, deposit.TypeId);
+                Assert.Equal("واریز به حساب", deposit.TypeTitle);
+            },
+            withdrawal =>
+            {
+                Assert.Equal(2, withdrawal.TypeId);
+                Assert.Equal("برداشت از حساب", withdrawal.TypeTitle);
+            });
 
         Assert.Equal(0, await dbContext.CourseEpisode.CountAsync(cancellationToken));
     }
@@ -90,6 +109,7 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
         // The test authentication scheme challenges with 401; production cookie auth redirects.
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
     [Fact]
     public async Task Wallet_type_id_is_the_actual_foreign_key_for_transaction_types_one_and_two()
     {
@@ -100,10 +120,13 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
         var user = CreateRelationshipTestUser($"wallet-{uniqueKey}");
 
         dbContext.Users.Add(user);
-        dbContext.WalletTypes.AddRange(
-            new WalletType { TypeId = 1, TypeTitle = "Deposit" },
-            new WalletType { TypeId = 2, TypeTitle = "Withdrawal" });
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var seededWalletTypes = await dbContext.WalletTypes
+            .AsNoTracking()
+            .ToDictionaryAsync(walletType => walletType.TypeId, cancellationToken);
+        Assert.Equal("واریز به حساب", seededWalletTypes[1].TypeTitle);
+        Assert.Equal("برداشت از حساب", seededWalletTypes[2].TypeTitle);
 
         dbContext.Wallets.AddRange(
             new Wallet
@@ -200,5 +223,4 @@ public sealed class MediaSqlServerInfrastructureTests(MediaSqlServerFixture fixt
             IsActive = true,
             IsDelete = false
         };
-
 }
